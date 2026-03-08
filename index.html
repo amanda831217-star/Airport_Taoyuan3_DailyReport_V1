@@ -522,14 +522,24 @@ return;
 const d=json.data;
 
 overview.innerHTML=`
-日期:${d.date}<br>
-填報:${d.reporter}<br>
-區域:${d.area}<br>
-施工:${d.workItem}<br>
-點工:${d.dailyDirectTotal}<br>
-計價:${d.dailyMeasuredTotal}<br>
-累計點工:${d.cumDirectTotal}<br>
-累計計價:${d.cumMeasuredTotal}
+<div style="font-size:15px">
+
+<b>日期</b>：${d.date}<br>
+<b>填報人</b>：${d.reporter}<br>
+<b>施工區域</b>：${d.area}<br><br>
+
+<b>施工內容</b><br>
+${d.workItem}<br><br>
+
+<b>人力</b><br>
+點工：${d.dailyDirectTotal} 人<br>
+計價：${d.dailyMeasuredTotal} 人<br><br>
+
+<b>累計</b><br>
+點工：${d.cumDirectTotal} 人<br>
+計價：${d.cumMeasuredTotal} 人
+
+</div>
 `;
 
 }catch(err){
