@@ -207,10 +207,10 @@
     }
 
     .action-row{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin-top:12px;
+       display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-top:12px;
     }
 
     .btn{
@@ -487,7 +487,6 @@
       </div>
 
       <div class="action-row">
-        <button class="btn btn-soft" id="loadBtn" type="button">載入當日資料</button>
         <button class="btn btn-line" id="newBtn" type="button">清空目前內容</button>
       </div>
 
@@ -699,9 +698,9 @@ const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
 const state = {
-  loadBusy: false,
   saveBusy: false,
   overviewBusy: false,
+  formAutoBusy: false,
   exists: false
 };
 
@@ -711,12 +710,14 @@ function setLoading(v){
 
 function setMsg(id, type, text){
   const el = $(id);
+  if (!el) return;
   el.className = `msg ${type} show`;
   el.textContent = text;
 }
 
 function clearMsg(id){
   const el = $(id);
+  if (!el) return;
   el.className = 'msg';
   el.textContent = '';
 }
@@ -852,6 +853,27 @@ function clearForm(keepReporter = true){
   ensureDefaultRows();
 }
 
+function clearOverview(){
+  $('#dailyDirectTotal').textContent = '0';
+  $('#dailyMeasuredTotal').textContent = '0';
+  $('#cumDirectTotal').textContent = '0';
+  $('#cumMeasuredTotal').textContent = '0';
+
+  $('#ovSite').textContent = '-';
+  $('#ovDate').textContent = '-';
+  $('#ovReporter').textContent = '-';
+  $('#ovArea').textContent = '-';
+  $('#ovWorkItem').textContent = '-';
+  $('#ovIssue').textContent = '-';
+  $('#ovWorkTime').textContent = '-';
+  $('#ovOT').textContent = '-';
+  $('#ovUpdatedAt').textContent = '-';
+  $('#ovDirect').textContent = '-';
+  $('#ovMeasured').textContent = '-';
+  $('#ovVehicles').innerHTML = `<div class="list-row"><div class="mini">無資料</div></div>`;
+  $('#ovMaterials').innerHTML = `<div class="list-row"><div class="mini">無資料</div></div>`;
+}
+
 function collectVehicles(){
   return $$('.vehicle-item').map(item => ({
     type: item.querySelector('.vehicle-type').value.trim(),
@@ -933,19 +955,15 @@ function fillForm(data){
   }
 }
 
-async function loadReport(auto = false){
-  if (state.loadBusy) return;
+async function autoLoadFormByDate(showMessage = false){
+  if (state.formAutoBusy) return;
 
   clearMsg('#formMsg');
   const date = normalizeDate($('#date').value);
 
-  if (!date){
-    if (!auto) setMsg('#formMsg','err','請先選擇日期');
-    return;
-  }
+  if (!date) return;
 
-  state.loadBusy = true;
-  $('#loadBtn').disabled = true;
+  state.formAutoBusy = true;
   setLoading(true);
 
   try{
@@ -959,7 +977,7 @@ async function loadReport(auto = false){
       state.exists = false;
       clearForm(true);
       $('#date').value = date;
-      if (!auto) setMsg('#formMsg','info','當日尚無資料，可直接填報');
+      if (showMessage) setMsg('#formMsg','info','當日尚無資料，可直接填報');
       return;
     }
 
@@ -971,12 +989,11 @@ async function loadReport(auto = false){
       localStorage.setItem('reporter_name', json.data.reporter);
     }
 
-    if (!auto) setMsg('#formMsg','ok','已載入當日資料');
+    if (showMessage) setMsg('#formMsg','ok','已自動帶入當日資料');
   } catch(err){
     setMsg('#formMsg','err',`載入失敗：${err.message}`);
   } finally {
-    state.loadBusy = false;
-    $('#loadBtn').disabled = false;
+    state.formAutoBusy = false;
     setLoading(false);
   }
 }
@@ -1015,10 +1032,10 @@ function renderOverviewList(targetId, items, type){
 }
 
 function renderOverview(data){
-  $('#dailyDirectTotal').textContent = intVal(data.dailyDirectTotal);
-  $('#dailyMeasuredTotal').textContent = intVal(data.dailyMeasuredTotal);
-  $('#cumDirectTotal').textContent = intVal(data.cumDirectTotal);
-  $('#cumMeasuredTotal').textContent = intVal(data.cumMeasuredTotal);
+  $('#dailyDirectTotal').textContent = String(intVal(data.dailyDirectTotal));
+  $('#dailyMeasuredTotal').textContent = String(intVal(data.dailyMeasuredTotal));
+  $('#cumDirectTotal').textContent = String(intVal(data.cumDirectTotal));
+  $('#cumMeasuredTotal').textContent = String(intVal(data.cumMeasuredTotal));
 
   $('#ovSite').textContent = data.siteName || '桃園地三航廈-機電工程';
   $('#ovDate').textContent = data.date || '-';
@@ -1037,14 +1054,14 @@ function renderOverview(data){
   renderOverviewList('#ovMaterials', data.materials || [], 'material');
 }
 
-async function loadOverview(auto = false){
+async function loadOverview(showMessage = true){
   if (state.overviewBusy) return;
 
   clearMsg('#overviewMsg');
   const date = normalizeDate($('#overviewDate').value);
 
   if (!date){
-    if (!auto) setMsg('#overviewMsg','err','請先選擇日期');
+    if (showMessage) setMsg('#overviewMsg','err','請先選擇日期');
     return;
   }
 
@@ -1053,26 +1070,24 @@ async function loadOverview(auto = false){
   setLoading(true);
 
   try{
-    const url = `${API_URL}?action=getOverview&date=${encodeURIComponent(date)}&_=${Date.now()}`;
+    const url = `${API_URL}?action=getReport&date=${encodeURIComponent(date)}&_=${Date.now()}`;
     const res = await timeoutFetch(url, { method:'GET' }, 20000);
     const json = await res.json();
 
     if (!json.ok) throw new Error(json.message || 'overview_failed');
 
     if (!json.exists){
-      renderOverview({
-        date,
-        siteName:'桃園地三航廈-機電工程',
-        vehicles:[],
-        materials:[]
-      });
-      if (!auto) setMsg('#overviewMsg','info','當日尚無資料');
+      clearOverview();
+      $('#ovDate').textContent = date;
+      $('#ovSite').textContent = '桃園地三航廈-機電工程';
+      if (showMessage) setMsg('#overviewMsg','info','當日尚無資料');
       return;
     }
 
     renderOverview(json.data);
-    if (!auto) setMsg('#overviewMsg','ok','查詢完成');
+    if (showMessage) setMsg('#overviewMsg','ok','查詢完成');
   } catch(err){
+    clearOverview();
     setMsg('#overviewMsg','err',`查詢失敗：${err.message}`);
   } finally {
     state.overviewBusy = false;
@@ -1149,7 +1164,7 @@ async function saveReport(){
 
         state.exists = true;
         $('#overviewDate').value = payload.date;
-        await loadOverview(true);
+        await loadOverview(false);
         setMsg('#formMsg','ok','已覆蓋更新');
         return;
       }
@@ -1159,7 +1174,7 @@ async function saveReport(){
 
     state.exists = true;
     $('#overviewDate').value = payload.date;
-    await loadOverview(true);
+    await loadOverview(false);
     setMsg('#formMsg','ok', json.mode === 'update' ? '已覆蓋更新' : '新增儲存成功');
   } catch(err){
     setMsg('#formMsg','err',`儲存失敗：${err.message}`);
@@ -1195,9 +1210,8 @@ function bindEvents(){
     ensureDefaultRows();
   });
 
-  $('#loadBtn').addEventListener('click', () => loadReport(false));
   $('#saveBtn').addEventListener('click', saveReport);
-  $('#overviewBtn').addEventListener('click', () => loadOverview(false));
+  $('#overviewBtn').addEventListener('click', () => loadOverview(true));
 
   $('#newBtn').addEventListener('click', () => {
     state.exists = false;
@@ -1213,12 +1227,12 @@ function bindEvents(){
   $('#date').addEventListener('change', async () => {
     state.exists = false;
     clearMsg('#formMsg');
-    await loadReport(true);
+    await autoLoadFormByDate(false);
   });
 
   $('#overviewDate').addEventListener('change', async () => {
     clearMsg('#overviewMsg');
-    await loadOverview(true);
+    await loadOverview(false);
   });
 }
 
@@ -1232,6 +1246,7 @@ async function init(){
 
   ensureDefaultRows();
   bindEvents();
+  clearOverview();
 
   try{
     const res = await timeoutFetch(`${API_URL}?action=ping&_=${Date.now()}`, { method:'GET' }, 12000);
@@ -1242,8 +1257,8 @@ async function init(){
     return;
   }
 
-  await loadReport(true);
-  await loadOverview(true);
+  await autoLoadFormByDate(false);
+  await loadOverview(false);
 }
 
 init();
