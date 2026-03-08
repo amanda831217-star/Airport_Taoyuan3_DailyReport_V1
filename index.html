@@ -835,6 +835,66 @@ async function postForm(data){
     }
 
     init();
+
+    async function submitReport(action){
+  clearMsg('#formMsg');
+  const payload = collectPayload();
+  payload.action = action;
+
+  if (!payload.date){
+    setMsg('#formMsg','err','請選擇日期');
+    return;
+  }
+  if (!payload.reporter){
+    setMsg('#formMsg','err','請輸入填報人');
+    return;
+  }
+
+  try{
+    setLoading(true);
+
+    const body = new URLSearchParams();
+    Object.keys(payload).forEach(k=>{
+      body.append(k, typeof payload[k] === 'object' ? JSON.stringify(payload[k]) : payload[k]);
+    });
+
+    const res = await fetch(API_URL,{
+      method:'POST',
+      body
+    });
+
+    const json = await res.json();
+
+    if (!json.ok) {
+      if (json.message === 'date_exists') {
+        setMsg('#formMsg','err','該日期已有資料，請改按「更新修改」');
+        return;
+      }
+      if (json.message === 'date_not_found') {
+        setMsg('#formMsg','err','該日期尚無資料，請先按「新增儲存」');
+        return;
+      }
+      throw new Error(json.message || 'save_failed');
+    }
+
+    if (json.mode === 'create') {
+      setMsg('#formMsg','ok','新增儲存成功');
+    } else if (json.mode === 'update') {
+      setMsg('#formMsg','ok','更新修改成功');
+    } else {
+      setMsg('#formMsg','ok','作業成功');
+    }
+
+    $('#overviewDate').value = payload.date;
+  } catch(err){
+    setMsg('#formMsg','err',`送出失敗：${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+}
+
+$('#createBtn').addEventListener('click', ()=>submitReport('createReport'));
+$('#updateBtn').addEventListener('click', ()=>submitReport('updateReport'));
   </script>
 </body>
 </html>
