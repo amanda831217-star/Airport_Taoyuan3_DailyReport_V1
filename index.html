@@ -699,13 +699,12 @@ const $$ = s => [...document.querySelectorAll(s)];
 
 const state = {
   saveBusy: false,
-  overviewBusy: false,
-  formAutoBusy: false,
-  exists: false
+  overviewBusy: false
 };
 
 function setLoading(v){
-  $('#loading').classList.toggle('show', v);
+  const el = $('#loading');
+  if (el) el.classList.toggle('show', v);
 }
 
 function setMsg(id, type, text){
@@ -918,86 +917,6 @@ function collectPayload(action){
   };
 }
 
-function fillForm(data){
-  $('#siteName').value = data.siteName || '桃園地三航廈-機電工程';
-  $('#reporter').value = data.reporter || $('#reporter').value || '';
-  $('#area').value = data.area || '';
-  $('#workItem').value = data.workItem || '';
-  $('#issue').value = data.issue || '';
-  $('#directConstruction').value = intVal(data.directConstruction);
-  $('#directTransport').value = intVal(data.directTransport);
-  $('#directManagement').value = intVal(data.directManagement);
-  $('#directOther').value = intVal(data.directOther);
-  $('#measuredConstruction').value = intVal(data.measuredConstruction);
-  $('#measuredTransport').value = intVal(data.measuredTransport);
-  $('#measuredManagement').value = intVal(data.measuredManagement);
-  $('#measuredOther').value = intVal(data.measuredOther);
-  $('#workStart').value = data.workStart || '';
-  $('#workEnd').value = data.workEnd || '';
-  $('#otDirect').value = intVal(data.otDirect);
-  $('#otMeasured').value = intVal(data.otMeasured);
-  $('#otStart').value = data.otStart || '';
-  $('#otEnd').value = data.otEnd || '';
-
-  $('#vehiclesWrap').innerHTML = '';
-  $('#materialsWrap').innerHTML = '';
-
-  if (Array.isArray(data.vehicles) && data.vehicles.length) {
-    data.vehicles.forEach(addVehicle);
-  } else {
-    addVehicle();
-  }
-
-  if (Array.isArray(data.materials) && data.materials.length) {
-    data.materials.forEach(addMaterial);
-  } else {
-    addMaterial();
-  }
-}
-
-async function autoLoadFormByDate(showMessage = false){
-  if (state.formAutoBusy) return;
-
-  clearMsg('#formMsg');
-  const date = normalizeDate($('#date').value);
-
-  if (!date) return;
-
-  state.formAutoBusy = true;
-  setLoading(true);
-
-  try{
-    const url = `${API_URL}?action=getReport&date=${encodeURIComponent(date)}&_=${Date.now()}`;
-    const res = await timeoutFetch(url, { method:'GET' }, 20000);
-    const json = await res.json();
-
-    if (!json.ok) throw new Error(json.message || 'load_failed');
-
-    if (!json.exists){
-      state.exists = false;
-      clearForm(true);
-      $('#date').value = date;
-      if (showMessage) setMsg('#formMsg','info','當日尚無資料，可直接填報');
-      return;
-    }
-
-    state.exists = true;
-    fillForm(json.data);
-    $('#date').value = date;
-
-    if (json.data.reporter) {
-      localStorage.setItem('reporter_name', json.data.reporter);
-    }
-
-    if (showMessage) setMsg('#formMsg','ok','已自動帶入當日資料');
-  } catch(err){
-    setMsg('#formMsg','err',`載入失敗：${err.message}`);
-  } finally {
-    state.formAutoBusy = false;
-    setLoading(false);
-  }
-}
-
 function renderOverviewList(targetId, items, type){
   const wrap = $(targetId);
   wrap.innerHTML = '';
@@ -1072,7 +991,8 @@ async function loadOverview(showMessage = true){
   try{
     const url = `${API_URL}?action=getReport&date=${encodeURIComponent(date)}&_=${Date.now()}`;
     const res = await timeoutFetch(url, { method:'GET' }, 20000);
-    const json = await res.json();
+    const text = await res.text();
+    const json = JSON.parse(text);
 
     if (!json.ok) throw new Error(json.message || 'overview_failed');
 
@@ -1101,26 +1021,38 @@ async function saveReport(){
 
   clearMsg('#formMsg');
 
-  let action = 'createReport';
-
-  if (state.exists) {
-    const yes = window.confirm('已填過，是否覆蓋？');
-    if (!yes) return;
-    action = 'updateReport';
-  }
-
-  const payload = collectPayload(action);
-
-  if (!payload.date){
+  const date = normalizeDate($('#date').value);
+  if (!date){
     setMsg('#formMsg','err','請選擇日期');
     return;
   }
 
-  if (!payload.reporter){
+  const reporter = $('#reporter').value.trim();
+  if (!reporter){
     setMsg('#formMsg','err','請輸入填報人');
     $('#reporter').focus();
     return;
   }
+
+  let action = 'createReport';
+
+  try{
+    const checkUrl = `${API_URL}?action=getReport&date=${encodeURIComponent(date)}&_=${Date.now()}`;
+    const checkRes = await timeoutFetch(checkUrl, { method:'GET' }, 20000);
+    const checkText = await checkRes.text();
+    const checkJson = JSON.parse(checkText);
+
+    if (checkJson.ok && checkJson.exists) {
+      const yes = window.confirm('此日期已有資料，是否覆蓋？');
+      if (!yes) return;
+      action = 'updateReport';
+    }
+  } catch(err){
+    setMsg('#formMsg','err',`日期檢查失敗：${err.message}`);
+    return;
+  }
+
+  const payload = collectPayload(action);
 
   state.saveBusy = true;
   $('#saveBtn').disabled = true;
@@ -1128,7 +1060,7 @@ async function saveReport(){
   setLoading(true);
 
   try{
-    localStorage.setItem('reporter_name', payload.reporter);
+    localStorage.setItem('reporter_name', reporter);
 
     const body = new URLSearchParams();
     Object.keys(payload).forEach(k => {
@@ -1140,42 +1072,15 @@ async function saveReport(){
       body
     }, 25000);
 
-    const json = await res.json();
+    const text = await res.text();
+    const json = JSON.parse(text);
 
-    if (!json.ok) {
-      if (json.message === 'date_exists') {
-        const yes = window.confirm('已填過，是否覆蓋？');
-        if (!yes) return;
+    if (!json.ok) throw new Error(json.message || 'save_failed');
 
-        payload.action = 'updateReport';
-
-        const body2 = new URLSearchParams();
-        Object.keys(payload).forEach(k => {
-          body2.append(k, typeof payload[k] === 'object' ? JSON.stringify(payload[k]) : payload[k]);
-        });
-
-        const res2 = await timeoutFetch(API_URL, {
-          method:'POST',
-          body: body2
-        }, 25000);
-
-        const json2 = await res2.json();
-        if (!json2.ok) throw new Error(json2.message || 'update_failed');
-
-        state.exists = true;
-        $('#overviewDate').value = payload.date;
-        await loadOverview(false);
-        setMsg('#formMsg','ok','已覆蓋更新');
-        return;
-      }
-
-      throw new Error(json.message || 'save_failed');
-    }
-
-    state.exists = true;
     $('#overviewDate').value = payload.date;
     await loadOverview(false);
-    setMsg('#formMsg','ok', json.mode === 'update' ? '已覆蓋更新' : '新增儲存成功');
+
+    setMsg('#formMsg','ok', action === 'updateReport' ? '已覆蓋更新' : '新增儲存成功');
   } catch(err){
     setMsg('#formMsg','err',`儲存失敗：${err.message}`);
   } finally {
@@ -1214,7 +1119,6 @@ function bindEvents(){
   $('#overviewBtn').addEventListener('click', () => loadOverview(true));
 
   $('#newBtn').addEventListener('click', () => {
-    state.exists = false;
     clearForm(true);
     $('#date').value = todayStr();
     setMsg('#formMsg','info','已清空目前內容');
@@ -1224,15 +1128,8 @@ function bindEvents(){
     localStorage.setItem('reporter_name', $('#reporter').value.trim());
   });
 
-  $('#date').addEventListener('change', async () => {
-    state.exists = false;
-    clearMsg('#formMsg');
-    await autoLoadFormByDate(false);
-  });
-
-  $('#overviewDate').addEventListener('change', async () => {
+  $('#overviewDate').addEventListener('change', () => {
     clearMsg('#overviewMsg');
-    await loadOverview(false);
   });
 }
 
@@ -1250,15 +1147,12 @@ async function init(){
 
   try{
     const res = await timeoutFetch(`${API_URL}?action=ping&_=${Date.now()}`, { method:'GET' }, 12000);
-    const json = await res.json();
+    const text = await res.text();
+    const json = JSON.parse(text);
     if (!json.ok) throw new Error('api_unavailable');
   } catch(err){
     setMsg('#formMsg','err','API 連線失敗，請檢查 Apps Script Web App URL 與部署權限');
-    return;
   }
-
-  await autoLoadFormByDate(false);
-  await loadOverview(false);
 }
 
 init();
