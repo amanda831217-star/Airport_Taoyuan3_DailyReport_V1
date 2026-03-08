@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-
 <title>桃園第三航廈施工日報</title>
 
 <style>
@@ -16,14 +14,20 @@ background:#0b1220;
 color:#e5e7eb;
 }
 
-header{
-background:#020617;
-padding:16px;
-text-align:center;
-font-size:20px;
-font-weight:600;
-letter-spacing:1px;
+.hero{
+position:relative;
+height:180px;
+background:linear-gradient(180deg,rgba(0,0,0,.4),rgba(0,0,0,.6)),
+url("plane.jpg") center/cover;
+display:flex;
+align-items:flex-end;
+padding:20px;
 border-bottom:2px solid #1e293b;
+}
+
+.hero-title{
+font-size:22px;
+font-weight:700;
 }
 
 .container{
@@ -32,16 +36,16 @@ margin:auto;
 padding:16px;
 }
 
-.card{
+.section{
 background:#111827;
 border:1px solid #1f2937;
 border-radius:12px;
 padding:16px;
 margin-bottom:16px;
-box-shadow:0 4px 20px rgba(0,0,0,0.3);
+box-shadow:0 4px 20px rgba(0,0,0,.35);
 }
 
-.card-title{
+.section-title{
 font-size:16px;
 font-weight:600;
 margin-bottom:10px;
@@ -59,15 +63,31 @@ color:#f1f5f9;
 font-size:14px;
 }
 
-input:focus,textarea:focus{
-outline:none;
-border-color:#38bdf8;
-}
-
 .grid{
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:10px;
+}
+
+.kpi-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+margin-bottom:12px;
+}
+
+.kpi{
+background:#020617;
+border-radius:10px;
+padding:16px;
+text-align:center;
+border:1px solid #1f2937;
+}
+
+.kpi-number{
+font-size:28px;
+font-weight:700;
+margin-top:4px;
 }
 
 button{
@@ -80,49 +100,37 @@ color:white;
 font-size:15px;
 font-weight:600;
 cursor:pointer;
-transition:0.2s;
 }
 
 button:hover{
 background:#0369a1;
 }
 
-.vehicle-item,
-.material-item{
+.list-card{
 background:#020617;
 padding:12px;
-border-radius:8px;
-margin-bottom:10px;
+border-radius:10px;
 border:1px solid #1f2937;
-}
-
-.list{
-background:#020617;
-border-radius:8px;
-padding:12px;
-line-height:1.7;
-font-size:14px;
+margin-bottom:10px;
 }
 
 .msg{
+display:none;
 padding:10px;
 border-radius:8px;
 margin-top:8px;
 font-size:13px;
-display:none;
 }
 
-.msg.show{display:block;}
+.msg.show{display:block}
 
-.msg.err{background:#7f1d1d}
 .msg.ok{background:#065f46}
-.msg.info{background:#1e3a8a}
+.msg.err{background:#7f1d1d}
 
 .loading{
 display:none;
 text-align:center;
 padding:10px;
-font-size:14px;
 }
 
 .loading.show{
@@ -130,42 +138,36 @@ display:block;
 }
 
 </style>
-
 </head>
-
 
 <body>
 
-<header>
-桃園第三航廈｜機電工程施工日報
-</header>
-
+<div class="hero">
+<div class="hero-title">桃園第三航廈｜機電工程施工日報</div>
+</div>
 
 <div class="container">
 
 <div id="loading" class="loading">Loading...</div>
 
+<!-- 填報 -->
 
-<div class="card">
+<div class="section">
 
-<div class="card-title">基本資料</div>
+<div class="section-title">基本資料</div>
 
 <input id="date" type="date">
 <input id="reporter" placeholder="填報人">
-
 <input id="area" placeholder="施工區域">
-
 <textarea id="workItem" placeholder="今日施工項目"></textarea>
-
 <textarea id="issue" placeholder="Issue"></textarea>
 
 </div>
 
 
+<div class="section">
 
-<div class="card">
-
-<div class="card-title">人力</div>
+<div class="section-title">人力</div>
 
 <div class="grid">
 
@@ -193,10 +195,9 @@ display:block;
 </div>
 
 
+<div class="section">
 
-<div class="card">
-
-<div class="card-title">加班</div>
+<div class="section-title">加班</div>
 
 <div class="grid">
 
@@ -211,54 +212,84 @@ display:block;
 </div>
 
 
+<div class="section">
 
-<div class="card">
+<div class="section-title">車輛 / 機具</div>
 
-<div class="card-title">車輛 / 機具</div>
+<div id="vehicles"></div>
 
-<div id="vehiclesWrap"></div>
-
-<button id="addVehicleBtn">新增車輛</button>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="card-title">材料（自購）</div>
-
-<div id="materialsWrap"></div>
-
-<button id="addMaterialBtn">新增材料</button>
+<button onclick="addVehicle()">新增車輛</button>
 
 </div>
 
 
+<div class="section">
 
-<button id="saveBtn">儲存</button>
+<div class="section-title">材料（自購）</div>
+
+<div id="materials"></div>
+
+<button onclick="addMaterial()">新增材料</button>
+
+</div>
+
+
+<button onclick="save()">儲存</button>
 
 <div id="formMsg" class="msg"></div>
 
 
 
-<div class="card">
+<!-- 總覽 -->
 
-<div class="card-title">總覽查詢</div>
+<div class="section">
 
-<input id="overviewDate" type="date">
+<div class="section-title">總覽查詢</div>
 
-<button id="overviewBtn">查詢</button>
+<input id="queryDate" type="date">
 
-<div id="overview" class="list"></div>
-
-<div id="overviewMsg" class="msg"></div>
+<button onclick="loadOverview()">查詢</button>
 
 </div>
 
 
+<div id="overview" class="section" style="display:none">
+
+<div class="section-title">當日資訊</div>
+
+<div class="kpi-grid">
+
+<div class="kpi">
+<div>當日點工</div>
+<div id="kpiDirect" class="kpi-number">0</div>
 </div>
 
+<div class="kpi">
+<div>當日計價</div>
+<div id="kpiMeasured" class="kpi-number">0</div>
+</div>
+
+<div class="kpi">
+<div>累計點工</div>
+<div id="kpiCumDirect" class="kpi-number">0</div>
+</div>
+
+<div class="kpi">
+<div>累計計價</div>
+<div id="kpiCumMeasured" class="kpi-number">0</div>
+</div>
+
+</div>
+
+<div id="infoCard" class="list-card"></div>
+
+<div id="vehicleCard"></div>
+
+<div id="materialCard"></div>
+
+</div>
+
+</div>
 
 
 <script>
@@ -266,30 +297,38 @@ display:block;
 const API_URL="https://script.google.com/macros/s/AKfycbwvw1fyJ56kGHiPB_aupVxxoVTaUbd0QmX8EQnxrk7sgjgZaS65WPy3KmuFR_wWJhNh/exec";
 
 
-const state={
-saveBusy:false,
-overviewBusy:false
-};
+function addVehicle(){
 
+const el=document.createElement("div");
 
-function setLoading(v){
+el.className="list-card";
 
-document.getElementById("loading")
-.classList.toggle("show",v);
+el.innerHTML=`
+<input class="type" placeholder="車種">
+<input class="qty" type="number" placeholder="數量">
+<input class="workers" type="number" placeholder="作業人數">
+`;
 
-}
-
-
-function setMsg(id,type,text){
-
-const el=document.getElementById(id);
-
-el.className="msg "+type+" show";
-
-el.innerText=text;
+vehicles.appendChild(el);
 
 }
 
+function addMaterial(){
+
+const el=document.createElement("div");
+
+el.className="list-card";
+
+el.innerHTML=`
+<input class="name" placeholder="材料名稱">
+<input class="spec" placeholder="規格">
+<input class="unit" placeholder="單位">
+<input class="qty" type="number" placeholder="數量">
+`;
+
+materials.appendChild(el);
+
+}
 
 function intVal(v){
 
@@ -300,92 +339,29 @@ return isNaN(n)?0:n;
 }
 
 
-
-function vehicleTemplate(){
-
-return `
-<div class="vehicle-item">
-<input class="vehicle-type" placeholder="車種">
-<input class="vehicle-qty" type="number" placeholder="數量">
-<input class="vehicle-workers" type="number" placeholder="作業人數">
-<button class="delVehicle">刪除</button>
-</div>
-`;
-
-}
-
-
-function materialTemplate(){
-
-return `
-<div class="material-item">
-<input class="material-name" placeholder="材料名稱">
-<input class="material-spec" placeholder="規格">
-<input class="material-unit" placeholder="單位">
-<input class="material-qty" type="number" placeholder="數量">
-<button class="delMaterial">刪除</button>
-</div>
-`;
-
-}
-
-
-function addVehicle(){
-
-vehiclesWrap.insertAdjacentHTML(
-"beforeend",
-vehicleTemplate()
-);
-
-}
-
-
-function addMaterial(){
-
-materialsWrap.insertAdjacentHTML(
-"beforeend",
-materialTemplate()
-);
-
-}
-
-
 function collectVehicles(){
 
-return [...document.querySelectorAll(".vehicle-item")]
+return [...vehicles.children].map(v=>({
 
-.map(v=>({
+type:v.querySelector(".type").value,
+qty:intVal(v.querySelector(".qty").value),
+workers:intVal(v.querySelector(".workers").value)
 
-type:v.querySelector(".vehicle-type").value,
-
-qty:intVal(v.querySelector(".vehicle-qty").value),
-
-workers:intVal(v.querySelector(".vehicle-workers").value)
-
-}))
-
-.filter(v=>v.type);
+})).filter(v=>v.type);
 
 }
 
 
 function collectMaterials(){
 
-return [...document.querySelectorAll(".material-item")]
+return [...materials.children].map(m=>({
 
-.map(m=>({
+name:m.querySelector(".name").value,
+spec:m.querySelector(".spec").value,
+unit:m.querySelector(".unit").value,
+qty:intVal(m.querySelector(".qty").value)
 
-name:m.querySelector(".material-name").value,
-
-spec:m.querySelector(".material-spec").value,
-
-unit:m.querySelector(".material-unit").value,
-
-qty:intVal(m.querySelector(".material-qty").value)
-
-}))
-
-.filter(m=>m.name);
+})).filter(m=>m.name);
 
 }
 
@@ -393,78 +369,53 @@ qty:intVal(m.querySelector(".material-qty").value)
 
 async function save(){
 
-if(state.saveBusy)return;
-
-state.saveBusy=true;
-
-setLoading(true);
-
+loading.classList.add("show");
 
 const payload={
 
 action:"createReport",
 
 date:date.value,
-
 reporter:reporter.value,
-
 area:area.value,
-
 workItem:workItem.value,
-
 issue:issue.value,
 
 directConstruction:directConstruction.value,
-
 directTransport:directTransport.value,
-
 directManagement:directManagement.value,
-
 directOther:directOther.value,
 
 measuredConstruction:measuredConstruction.value,
-
 measuredTransport:measuredTransport.value,
-
 measuredManagement:measuredManagement.value,
-
 measuredOther:measuredOther.value,
 
 workStart:workStart.value,
-
 workEnd:workEnd.value,
 
 otDirect:otDirect.value,
-
 otMeasured:otMeasured.value,
-
 otStart:otStart.value,
-
 otEnd:otEnd.value,
 
 vehicles:JSON.stringify(collectVehicles()),
-
 materials:JSON.stringify(collectMaterials())
 
 };
 
-
 try{
 
-const res=await fetch(API_URL,{
+let res=await fetch(API_URL,{
 method:"POST",
 body:new URLSearchParams(payload)
 });
 
-const json=await res.json();
+let json=await res.json();
 
-if(!json.ok){
+if(!json.ok && json.message==="date_exists"){
 
-if(json.message==="date_exists"){
-
-const yes=confirm("已填過 是否覆蓋");
-
-if(!yes)return;
+if(confirm("已填過 是否覆蓋")){
 
 payload.action="updateReport";
 
@@ -477,17 +428,17 @@ body:new URLSearchParams(payload)
 
 }
 
-setMsg("formMsg","ok","儲存成功");
+formMsg.className="msg ok show";
+formMsg.innerText="儲存成功";
 
-}catch(err){
+}catch(e){
 
-setMsg("formMsg","err","儲存失敗");
+formMsg.className="msg err show";
+formMsg.innerText="儲存失敗";
 
 }
 
-state.saveBusy=false;
-
-setLoading(false);
+loading.classList.remove("show");
 
 }
 
@@ -495,25 +446,17 @@ setLoading(false);
 
 async function loadOverview(){
 
-if(state.overviewBusy)return;
+loading.classList.add("show");
 
-state.overviewBusy=true;
-
-setLoading(true);
-
-try{
-
-const res=await fetch(
-API_URL+
-"?action=getReport&date="+
-overviewDate.value
-);
+const res=await fetch(API_URL+"?action=getReport&date="+queryDate.value);
 
 const json=await res.json();
 
+loading.classList.remove("show");
+
 if(!json.exists){
 
-overview.innerHTML="無資料";
+alert("無資料");
 
 return;
 
@@ -521,49 +464,60 @@ return;
 
 const d=json.data;
 
-overview.innerHTML=`
-<div style="font-size:15px">
+overview.style.display="block";
 
-<b>日期</b>：${d.date}<br>
-<b>填報人</b>：${d.reporter}<br>
-<b>施工區域</b>：${d.area}<br><br>
+kpiDirect.innerText=d.dailyDirectTotal;
+kpiMeasured.innerText=d.dailyMeasuredTotal;
+kpiCumDirect.innerText=d.cumDirectTotal;
+kpiCumMeasured.innerText=d.cumMeasuredTotal;
 
-<b>施工內容</b><br>
-${d.workItem}<br><br>
-
-<b>人力</b><br>
-點工：${d.dailyDirectTotal} 人<br>
-計價：${d.dailyMeasuredTotal} 人<br><br>
-
-<b>累計</b><br>
-點工：${d.cumDirectTotal} 人<br>
-計價：${d.cumMeasuredTotal} 人
-
-</div>
+infoCard.innerHTML=`
+<b>日期</b> ${d.date}<br>
+<b>填報人</b> ${d.reporter}<br>
+<b>區域</b> ${d.area}<br>
+<b>施工</b> ${d.workItem}
 `;
 
-}catch(err){
+vehicleCard.innerHTML="<div class='section-title'>車輛</div>";
 
-setMsg("overviewMsg","err","查詢失敗");
+if(d.vehicles.length){
+
+d.vehicles.forEach(v=>{
+vehicleCard.innerHTML+=`
+<div class="list-card">
+${v.type} ｜ ${v.qty} 台 ｜ ${v.workers} 人
+</div>
+`;
+});
+
+}else{
+
+vehicleCard.innerHTML+="無資料";
 
 }
 
-state.overviewBusy=false;
 
-setLoading(false);
+materialCard.innerHTML="<div class='section-title'>材料</div>";
+
+if(d.materials.length){
+
+d.materials.forEach(m=>{
+materialCard.innerHTML+=`
+<div class="list-card">
+${m.name} ${m.spec} ${m.qty}${m.unit}
+</div>
+`;
+});
+
+}else{
+
+materialCard.innerHTML+="無資料";
 
 }
 
-
-
-addVehicleBtn.onclick=addVehicle;
-addMaterialBtn.onclick=addMaterial;
-
-saveBtn.onclick=save;
-overviewBtn.onclick=loadOverview;
+}
 
 </script>
-
 
 </body>
 </html>
