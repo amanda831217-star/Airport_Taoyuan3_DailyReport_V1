@@ -692,544 +692,559 @@
     </div>
   </section>
 
-  <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwvw1fyJ56kGHiPB_aupVxxoVTaUbd0QmX8EQnxrk7sgjgZaS65WPy3KmuFR_wWJhNh/exec';
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbwvw1fyJ56kGHiPB_aupVxxoVTaUbd0QmX8EQnxrk7sgjgZaS65WPy3KmuFR_wWJhNh/exec';
 
-    const $ = s => document.querySelector(s);
-    const $$ = s => [...document.querySelectorAll(s)];
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
 
-    const state = {
-      loadBusy: false,
-      saveBusy: false,
-      overviewBusy: false,
-      exists: false
-    };
+const state = {
+  loadBusy: false,
+  saveBusy: false,
+  overviewBusy: false,
+  exists: false
+};
 
-    function setLoading(v){
-      $('#loading').classList.toggle('show', v);
-    }
+function setLoading(v){
+  $('#loading').classList.toggle('show', v);
+}
 
-    function setMsg(id, type, text){
-      const el = $(id);
-      el.className = `msg ${type} show`;
-      el.textContent = text;
-    }
+function setMsg(id, type, text){
+  const el = $(id);
+  el.className = `msg ${type} show`;
+  el.textContent = text;
+}
 
-    function clearMsg(id){
-      const el = $(id);
-      el.className = 'msg';
-      el.textContent = '';
-    }
+function clearMsg(id){
+  const el = $(id);
+  el.className = 'msg';
+  el.textContent = '';
+}
 
-    function todayStr(){
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2,'0');
-      const dd = String(d.getDate()).padStart(2,'0');
-      return `${y}-${m}-${dd}`;
-    }
+function todayStr(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
 
-    function normalizeDate(v){
-      return String(v || '').trim().replace(/\//g, '-');
-    }
+function normalizeDate(v){
+  return String(v || '').trim().replace(/\//g, '-');
+}
 
-    function intVal(v){
-      const n = Number(v);
-      return isNaN(n) ? 0 : n;
-    }
+function intVal(v){
+  const n = Number(v);
+  return isNaN(n) ? 0 : n;
+}
 
-    function escapeHtml(str){
-      return String(str || '')
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'","&#39;");
-    }
+function escapeHtml(str){
+  return String(str || '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#39;");
+}
 
-    function timeoutFetch(url, options = {}, ms = 25000){
-      return Promise.race([
-        fetch(url, options),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('request_timeout')), ms))
-      ]);
-    }
+function timeoutFetch(url, options = {}, ms = 25000){
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('request_timeout')), ms))
+  ]);
+}
 
-    function switchPage(pageId){
-      $$('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.page === pageId));
-      $$('.page').forEach(p => p.classList.toggle('active', p.id === pageId));
-    }
+function switchPage(pageId){
+  $$('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.page === pageId));
+  $$('.page').forEach(p => p.classList.toggle('active', p.id === pageId));
+}
 
-    function vehicleTemplate(item = {}){
-      return `
-        <div class="repeat-item vehicle-item">
-          <div class="repeat-top">
-            <div class="repeat-title">車輛 / 機具</div>
-            <button class="btn btn-danger del-vehicle-btn" type="button">刪除</button>
-          </div>
-          <div class="grid">
-            <div class="field">
-              <label>車種</label>
-              <input type="text" class="vehicle-type" value="${escapeHtml(item.type || '')}" placeholder="請輸入車種">
-            </div>
-            <div class="field">
-              <label>數量</label>
-              <input type="number" class="vehicle-qty" min="0" step="1" value="${intVal(item.qty)}">
-            </div>
-            <div class="field">
-              <label>作業人數</label>
-              <input type="number" class="vehicle-workers" min="0" step="1" value="${intVal(item.workers)}">
-            </div>
-          </div>
+function vehicleTemplate(item = {}){
+  return `
+    <div class="repeat-item vehicle-item">
+      <div class="repeat-top">
+        <div class="repeat-title">車輛 / 機具</div>
+        <button class="btn btn-danger del-vehicle-btn" type="button">刪除</button>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label>車種</label>
+          <input type="text" class="vehicle-type" value="${escapeHtml(item.type || '')}" placeholder="請輸入車種">
         </div>
-      `;
-    }
-
-    function materialTemplate(item = {}){
-      return `
-        <div class="repeat-item material-item">
-          <div class="repeat-top">
-            <div class="repeat-title">材料（自購）</div>
-            <button class="btn btn-danger del-material-btn" type="button">刪除</button>
-          </div>
-          <div class="grid">
-            <div class="field">
-              <label>材料名稱</label>
-              <input type="text" class="material-name" value="${escapeHtml(item.name || '')}" placeholder="請輸入材料名稱">
-            </div>
-            <div class="field">
-              <label>規格</label>
-              <input type="text" class="material-spec" value="${escapeHtml(item.spec || '')}" placeholder="請輸入規格">
-            </div>
-            <div class="field">
-              <label>單位</label>
-              <input type="text" class="material-unit" value="${escapeHtml(item.unit || '')}" placeholder="請輸入單位">
-            </div>
-            <div class="field">
-              <label>數量</label>
-              <input type="number" class="material-qty" min="0" step="1" value="${intVal(item.qty)}">
-            </div>
-          </div>
+        <div class="field">
+          <label>數量</label>
+          <input type="number" class="vehicle-qty" min="0" step="1" value="${intVal(item.qty)}">
         </div>
-      `;
+        <div class="field">
+          <label>作業人數</label>
+          <input type="number" class="vehicle-workers" min="0" step="1" value="${intVal(item.workers)}">
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function materialTemplate(item = {}){
+  return `
+    <div class="repeat-item material-item">
+      <div class="repeat-top">
+        <div class="repeat-title">材料（自購）</div>
+        <button class="btn btn-danger del-material-btn" type="button">刪除</button>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label>材料名稱</label>
+          <input type="text" class="material-name" value="${escapeHtml(item.name || '')}" placeholder="請輸入材料名稱">
+        </div>
+        <div class="field">
+          <label>規格</label>
+          <input type="text" class="material-spec" value="${escapeHtml(item.spec || '')}" placeholder="請輸入規格">
+        </div>
+        <div class="field">
+          <label>單位</label>
+          <input type="text" class="material-unit" value="${escapeHtml(item.unit || '')}" placeholder="請輸入單位">
+        </div>
+        <div class="field">
+          <label>數量</label>
+          <input type="number" class="material-qty" min="0" step="1" value="${intVal(item.qty)}">
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addVehicle(item = {}){
+  $('#vehiclesWrap').insertAdjacentHTML('beforeend', vehicleTemplate(item));
+}
+
+function addMaterial(item = {}){
+  $('#materialsWrap').insertAdjacentHTML('beforeend', materialTemplate(item));
+}
+
+function ensureDefaultRows(){
+  if (!$('#vehiclesWrap').children.length) addVehicle();
+  if (!$('#materialsWrap').children.length) addMaterial();
+}
+
+function clearForm(keepReporter = true){
+  const reporter = keepReporter ? $('#reporter').value.trim() : '';
+  $('#siteName').value = '桃園地三航廈-機電工程';
+  $('#reporter').value = reporter;
+  $('#area').value = '';
+  $('#workItem').value = '';
+  $('#issue').value = '';
+  $('#directConstruction').value = 0;
+  $('#directTransport').value = 0;
+  $('#directManagement').value = 0;
+  $('#directOther').value = 0;
+  $('#measuredConstruction').value = 0;
+  $('#measuredTransport').value = 0;
+  $('#measuredManagement').value = 0;
+  $('#measuredOther').value = 0;
+  $('#workStart').value = '';
+  $('#workEnd').value = '';
+  $('#otDirect').value = 0;
+  $('#otMeasured').value = 0;
+  $('#otStart').value = '';
+  $('#otEnd').value = '';
+  $('#vehiclesWrap').innerHTML = '';
+  $('#materialsWrap').innerHTML = '';
+  ensureDefaultRows();
+}
+
+function collectVehicles(){
+  return $$('.vehicle-item').map(item => ({
+    type: item.querySelector('.vehicle-type').value.trim(),
+    qty: intVal(item.querySelector('.vehicle-qty').value),
+    workers: intVal(item.querySelector('.vehicle-workers').value)
+  })).filter(x => x.type || x.qty || x.workers);
+}
+
+function collectMaterials(){
+  return $$('.material-item').map(item => ({
+    name: item.querySelector('.material-name').value.trim(),
+    spec: item.querySelector('.material-spec').value.trim(),
+    unit: item.querySelector('.material-unit').value.trim(),
+    qty: intVal(item.querySelector('.material-qty').value)
+  })).filter(x => x.name || x.spec || x.unit || x.qty);
+}
+
+function collectPayload(action){
+  return {
+    action,
+    date: normalizeDate($('#date').value),
+    reporter: $('#reporter').value.trim(),
+    area: $('#area').value.trim(),
+    workItem: $('#workItem').value.trim(),
+    issue: $('#issue').value.trim(),
+    directConstruction: intVal($('#directConstruction').value),
+    directTransport: intVal($('#directTransport').value),
+    directManagement: intVal($('#directManagement').value),
+    directOther: intVal($('#directOther').value),
+    measuredConstruction: intVal($('#measuredConstruction').value),
+    measuredTransport: intVal($('#measuredTransport').value),
+    measuredManagement: intVal($('#measuredManagement').value),
+    measuredOther: intVal($('#measuredOther').value),
+    workStart: $('#workStart').value,
+    workEnd: $('#workEnd').value,
+    otDirect: intVal($('#otDirect').value),
+    otMeasured: intVal($('#otMeasured').value),
+    otStart: $('#otStart').value,
+    otEnd: $('#otEnd').value,
+    vehicles: collectVehicles(),
+    materials: collectMaterials()
+  };
+}
+
+function fillForm(data){
+  $('#siteName').value = data.siteName || '桃園地三航廈-機電工程';
+  $('#reporter').value = data.reporter || $('#reporter').value || '';
+  $('#area').value = data.area || '';
+  $('#workItem').value = data.workItem || '';
+  $('#issue').value = data.issue || '';
+  $('#directConstruction').value = intVal(data.directConstruction);
+  $('#directTransport').value = intVal(data.directTransport);
+  $('#directManagement').value = intVal(data.directManagement);
+  $('#directOther').value = intVal(data.directOther);
+  $('#measuredConstruction').value = intVal(data.measuredConstruction);
+  $('#measuredTransport').value = intVal(data.measuredTransport);
+  $('#measuredManagement').value = intVal(data.measuredManagement);
+  $('#measuredOther').value = intVal(data.measuredOther);
+  $('#workStart').value = data.workStart || '';
+  $('#workEnd').value = data.workEnd || '';
+  $('#otDirect').value = intVal(data.otDirect);
+  $('#otMeasured').value = intVal(data.otMeasured);
+  $('#otStart').value = data.otStart || '';
+  $('#otEnd').value = data.otEnd || '';
+
+  $('#vehiclesWrap').innerHTML = '';
+  $('#materialsWrap').innerHTML = '';
+
+  if (Array.isArray(data.vehicles) && data.vehicles.length) {
+    data.vehicles.forEach(addVehicle);
+  } else {
+    addVehicle();
+  }
+
+  if (Array.isArray(data.materials) && data.materials.length) {
+    data.materials.forEach(addMaterial);
+  } else {
+    addMaterial();
+  }
+}
+
+async function loadReport(auto = false){
+  if (state.loadBusy) return;
+
+  clearMsg('#formMsg');
+  const date = normalizeDate($('#date').value);
+
+  if (!date){
+    if (!auto) setMsg('#formMsg','err','請先選擇日期');
+    return;
+  }
+
+  state.loadBusy = true;
+  $('#loadBtn').disabled = true;
+  setLoading(true);
+
+  try{
+    const url = `${API_URL}?action=getReport&date=${encodeURIComponent(date)}&_=${Date.now()}`;
+    const res = await timeoutFetch(url, { method:'GET' }, 20000);
+    const json = await res.json();
+
+    if (!json.ok) throw new Error(json.message || 'load_failed');
+
+    if (!json.exists){
+      state.exists = false;
+      clearForm(true);
+      $('#date').value = date;
+      if (!auto) setMsg('#formMsg','info','當日尚無資料，可直接填報');
+      return;
     }
 
-    function addVehicle(item = {}){
-      $('#vehiclesWrap').insertAdjacentHTML('beforeend', vehicleTemplate(item));
+    state.exists = true;
+    fillForm(json.data);
+    $('#date').value = date;
+
+    if (json.data.reporter) {
+      localStorage.setItem('reporter_name', json.data.reporter);
     }
 
-    function addMaterial(item = {}){
-      $('#materialsWrap').insertAdjacentHTML('beforeend', materialTemplate(item));
+    if (!auto) setMsg('#formMsg','ok','已載入當日資料');
+  } catch(err){
+    setMsg('#formMsg','err',`載入失敗：${err.message}`);
+  } finally {
+    state.loadBusy = false;
+    $('#loadBtn').disabled = false;
+    setLoading(false);
+  }
+}
+
+function renderOverviewList(targetId, items, type){
+  const wrap = $(targetId);
+  wrap.innerHTML = '';
+
+  if (!items || !items.length){
+    wrap.innerHTML = `<div class="list-row"><div class="mini">無資料</div></div>`;
+    return;
+  }
+
+  items.forEach((x, i) => {
+    if (type === 'vehicle') {
+      wrap.insertAdjacentHTML('beforeend', `
+        <div class="list-row">
+          <div><span class="tag">第 ${i + 1} 筆</span></div>
+          <div>車種：${escapeHtml(x.type || '') || '-'}</div>
+          <div>數量：${intVal(x.qty)}</div>
+          <div>作業人數：${intVal(x.workers)}</div>
+        </div>
+      `);
+    } else {
+      wrap.insertAdjacentHTML('beforeend', `
+        <div class="list-row">
+          <div><span class="tag">第 ${i + 1} 筆</span></div>
+          <div>材料名稱：${escapeHtml(x.name || '') || '-'}</div>
+          <div>規格：${escapeHtml(x.spec || '') || '-'}</div>
+          <div>單位：${escapeHtml(x.unit || '') || '-'}</div>
+          <div>數量：${intVal(x.qty)}</div>
+        </div>
+      `);
+    }
+  });
+}
+
+function renderOverview(data){
+  $('#dailyDirectTotal').textContent = intVal(data.dailyDirectTotal);
+  $('#dailyMeasuredTotal').textContent = intVal(data.dailyMeasuredTotal);
+  $('#cumDirectTotal').textContent = intVal(data.cumDirectTotal);
+  $('#cumMeasuredTotal').textContent = intVal(data.cumMeasuredTotal);
+
+  $('#ovSite').textContent = data.siteName || '桃園地三航廈-機電工程';
+  $('#ovDate').textContent = data.date || '-';
+  $('#ovReporter').textContent = data.reporter || '-';
+  $('#ovArea').textContent = data.area || '-';
+  $('#ovWorkItem').textContent = data.workItem || '-';
+  $('#ovIssue').textContent = data.issue || '-';
+  $('#ovWorkTime').textContent = `${data.workStart || '-'} ~ ${data.workEnd || '-'}`;
+  $('#ovOT').textContent = `點工 ${intVal(data.otDirect)} 人 / 計價 ${intVal(data.otMeasured)} 人｜${data.otStart || '-'} ~ ${data.otEnd || '-'}`;
+  $('#ovUpdatedAt').textContent = data.updatedAt || '-';
+
+  $('#ovDirect').textContent = `施工 ${intVal(data.directConstruction)} / 運輸 ${intVal(data.directTransport)} / 管理 ${intVal(data.directManagement)} / 其它 ${intVal(data.directOther)}`;
+  $('#ovMeasured').textContent = `施工 ${intVal(data.measuredConstruction)} / 運輸 ${intVal(data.measuredTransport)} / 管理 ${intVal(data.measuredManagement)} / 其它 ${intVal(data.measuredOther)}`;
+
+  renderOverviewList('#ovVehicles', data.vehicles || [], 'vehicle');
+  renderOverviewList('#ovMaterials', data.materials || [], 'material');
+}
+
+async function loadOverview(auto = false){
+  if (state.overviewBusy) return;
+
+  clearMsg('#overviewMsg');
+  const date = normalizeDate($('#overviewDate').value);
+
+  if (!date){
+    if (!auto) setMsg('#overviewMsg','err','請先選擇日期');
+    return;
+  }
+
+  state.overviewBusy = true;
+  $('#overviewBtn').disabled = true;
+  setLoading(true);
+
+  try{
+    const url = `${API_URL}?action=getOverview&date=${encodeURIComponent(date)}&_=${Date.now()}`;
+    const res = await timeoutFetch(url, { method:'GET' }, 20000);
+    const json = await res.json();
+
+    if (!json.ok) throw new Error(json.message || 'overview_failed');
+
+    if (!json.exists){
+      renderOverview({
+        date,
+        siteName:'桃園地三航廈-機電工程',
+        vehicles:[],
+        materials:[]
+      });
+      if (!auto) setMsg('#overviewMsg','info','當日尚無資料');
+      return;
     }
 
-    function ensureDefaultRows(){
-      if (!$('#vehiclesWrap').children.length) addVehicle();
-      if (!$('#materialsWrap').children.length) addMaterial();
-    }
+    renderOverview(json.data);
+    if (!auto) setMsg('#overviewMsg','ok','查詢完成');
+  } catch(err){
+    setMsg('#overviewMsg','err',`查詢失敗：${err.message}`);
+  } finally {
+    state.overviewBusy = false;
+    $('#overviewBtn').disabled = false;
+    setLoading(false);
+  }
+}
 
-    function clearForm(keepReporter = true){
-      const reporter = keepReporter ? $('#reporter').value.trim() : '';
-      $('#siteName').value = '桃園地三航廈-機電工程';
-      $('#reporter').value = reporter;
-      $('#area').value = '';
-      $('#workItem').value = '';
-      $('#issue').value = '';
-      $('#directConstruction').value = 0;
-      $('#directTransport').value = 0;
-      $('#directManagement').value = 0;
-      $('#directOther').value = 0;
-      $('#measuredConstruction').value = 0;
-      $('#measuredTransport').value = 0;
-      $('#measuredManagement').value = 0;
-      $('#measuredOther').value = 0;
-      $('#workStart').value = '';
-      $('#workEnd').value = '';
-      $('#otDirect').value = 0;
-      $('#otMeasured').value = 0;
-      $('#otStart').value = '';
-      $('#otEnd').value = '';
-      $('#vehiclesWrap').innerHTML = '';
-      $('#materialsWrap').innerHTML = '';
-      ensureDefaultRows();
-      clearMsg('#formMsg');
-    }
+async function saveReport(){
+  if (state.saveBusy) return;
 
-    function collectVehicles(){
-      return $$('.vehicle-item').map(item => ({
-        type: item.querySelector('.vehicle-type').value.trim(),
-        qty: intVal(item.querySelector('.vehicle-qty').value),
-        workers: intVal(item.querySelector('.vehicle-workers').value)
-      })).filter(x => x.type || x.qty || x.workers);
-    }
+  clearMsg('#formMsg');
 
-    function collectMaterials(){
-      return $$('.material-item').map(item => ({
-        name: item.querySelector('.material-name').value.trim(),
-        spec: item.querySelector('.material-spec').value.trim(),
-        unit: item.querySelector('.material-unit').value.trim(),
-        qty: intVal(item.querySelector('.material-qty').value)
-      })).filter(x => x.name || x.spec || x.unit || x.qty);
-    }
+  let action = 'createReport';
 
-    function collectPayload(action){
-      return {
-        action,
-        date: normalizeDate($('#date').value),
-        reporter: $('#reporter').value.trim(),
-        area: $('#area').value.trim(),
-        workItem: $('#workItem').value.trim(),
-        issue: $('#issue').value.trim(),
-        directConstruction: intVal($('#directConstruction').value),
-        directTransport: intVal($('#directTransport').value),
-        directManagement: intVal($('#directManagement').value),
-        directOther: intVal($('#directOther').value),
-        measuredConstruction: intVal($('#measuredConstruction').value),
-        measuredTransport: intVal($('#measuredTransport').value),
-        measuredManagement: intVal($('#measuredManagement').value),
-        measuredOther: intVal($('#measuredOther').value),
-        workStart: $('#workStart').value,
-        workEnd: $('#workEnd').value,
-        otDirect: intVal($('#otDirect').value),
-        otMeasured: intVal($('#otMeasured').value),
-        otStart: $('#otStart').value,
-        otEnd: $('#otEnd').value,
-        vehicles: collectVehicles(),
-        materials: collectMaterials()
-      };
-    }
+  if (state.exists) {
+    const yes = window.confirm('已填過，是否覆蓋？');
+    if (!yes) return;
+    action = 'updateReport';
+  }
 
-    function fillForm(data){
-      $('#siteName').value = data.siteName || '桃園地三航廈-機電工程';
-      if (data.reporter) $('#reporter').value = data.reporter;
-      $('#area').value = data.area || '';
-      $('#workItem').value = data.workItem || '';
-      $('#issue').value = data.issue || '';
-      $('#directConstruction').value = intVal(data.directConstruction);
-      $('#directTransport').value = intVal(data.directTransport);
-      $('#directManagement').value = intVal(data.directManagement);
-      $('#directOther').value = intVal(data.directOther);
-      $('#measuredConstruction').value = intVal(data.measuredConstruction);
-      $('#measuredTransport').value = intVal(data.measuredTransport);
-      $('#measuredManagement').value = intVal(data.measuredManagement);
-      $('#measuredOther').value = intVal(data.measuredOther);
-      $('#workStart').value = data.workStart || '';
-      $('#workEnd').value = data.workEnd || '';
-      $('#otDirect').value = intVal(data.otDirect);
-      $('#otMeasured').value = intVal(data.otMeasured);
-      $('#otStart').value = data.otStart || '';
-      $('#otEnd').value = data.otEnd || '';
-      $('#vehiclesWrap').innerHTML = '';
-      $('#materialsWrap').innerHTML = '';
-      (Array.isArray(data.vehicles) && data.vehicles.length ? data.vehicles : [{}]).forEach(addVehicle);
-      (Array.isArray(data.materials) && data.materials.length ? data.materials : [{}]).forEach(addMaterial);
-      ensureDefaultRows();
-    }
+  const payload = collectPayload(action);
 
-    async function loadReport(){
-      if (state.loadBusy) return;
+  if (!payload.date){
+    setMsg('#formMsg','err','請選擇日期');
+    return;
+  }
 
-      clearMsg('#formMsg');
-      const date = normalizeDate($('#date').value);
+  if (!payload.reporter){
+    setMsg('#formMsg','err','請輸入填報人');
+    $('#reporter').focus();
+    return;
+  }
 
-      if (!date){
-        setMsg('#formMsg','err','請先選擇日期');
-        return;
-      }
+  state.saveBusy = true;
+  $('#saveBtn').disabled = true;
+  $('#saveBtn').textContent = '儲存中...';
+  setLoading(true);
 
-      state.loadBusy = true;
-      $('#loadBtn').disabled = true;
-      setLoading(true);
+  try{
+    localStorage.setItem('reporter_name', payload.reporter);
 
-      try{
-        const url = `${API_URL}?action=getReport&date=${encodeURIComponent(date)}&_=${Date.now()}`;
-        const res = await timeoutFetch(url,{method:'GET'},20000);
-        const json = await res.json();
+    const body = new URLSearchParams();
+    Object.keys(payload).forEach(k => {
+      body.append(k, typeof payload[k] === 'object' ? JSON.stringify(payload[k]) : payload[k]);
+    });
 
-        if (!json.ok) throw new Error(json.message || 'load_failed');
+    const res = await timeoutFetch(API_URL, {
+      method:'POST',
+      body
+    }, 25000);
 
-        if (!json.exists){
-          state.exists = false;
-          clearForm(true);
-          $('#date').value = date;
-          setMsg('#formMsg','info','當日尚無資料，可直接填報');
-          return;
-        }
+    const json = await res.json();
 
-        state.exists = true;
-        fillForm(json.data);
-        $('#date').value = date;
-
-        if (json.data.reporter) {
-          localStorage.setItem('reporter_name', json.data.reporter);
-        }
-
-        setMsg('#formMsg','ok','已載入當日資料');
-      } catch(err){
-        setMsg('#formMsg','err',`載入失敗：${err.message}`);
-      } finally {
-        state.loadBusy = false;
-        $('#loadBtn').disabled = false;
-        setLoading(false);
-      }
-    }
-
-    async function saveReport(){
-      if (state.saveBusy) return;
-
-      clearMsg('#formMsg');
-
-      let action = 'createReport';
-
-      if (state.exists) {
+    if (!json.ok) {
+      if (json.message === 'date_exists') {
         const yes = window.confirm('已填過，是否覆蓋？');
         if (!yes) return;
-        action = 'updateReport';
-      }
 
-      const payload = collectPayload(action);
+        payload.action = 'updateReport';
 
-      if (!payload.date){
-        setMsg('#formMsg','err','請選擇日期');
-        return;
-      }
-
-      if (!payload.reporter){
-        setMsg('#formMsg','err','請輸入填報人');
-        $('#reporter').focus();
-        return;
-      }
-
-      state.saveBusy = true;
-      $('#saveBtn').disabled = true;
-      $('#saveBtn').textContent = '儲存中...';
-      setLoading(true);
-
-      try{
-        localStorage.setItem('reporter_name', payload.reporter);
-
-        const body = new URLSearchParams();
+        const body2 = new URLSearchParams();
         Object.keys(payload).forEach(k => {
-          body.append(k, typeof payload[k] === 'object' ? JSON.stringify(payload[k]) : payload[k]);
+          body2.append(k, typeof payload[k] === 'object' ? JSON.stringify(payload[k]) : payload[k]);
         });
 
-        const res = await timeoutFetch(API_URL,{
+        const res2 = await timeoutFetch(API_URL, {
           method:'POST',
-          body
-        },25000);
+          body: body2
+        }, 25000);
 
-        const json = await res.json();
-
-        if (!json.ok) {
-          if (json.message === 'date_exists') {
-            const yes = window.confirm('已填過，是否覆蓋？');
-            if (!yes) return;
-
-            payload.action = 'updateReport';
-
-            const body2 = new URLSearchParams();
-            Object.keys(payload).forEach(k => {
-              body2.append(k, typeof payload[k] === 'object' ? JSON.stringify(payload[k]) : payload[k]);
-            });
-
-            const res2 = await timeoutFetch(API_URL,{
-              method:'POST',
-              body: body2
-            },25000);
-
-            const json2 = await res2.json();
-            if (!json2.ok) throw new Error(json2.message || 'update_failed');
-
-            state.exists = true;
-            $('#overviewDate').value = payload.date;
-            setMsg('#formMsg','ok','已覆蓋更新');
-            return;
-          }
-
-          throw new Error(json.message || 'save_failed');
-        }
+        const json2 = await res2.json();
+        if (!json2.ok) throw new Error(json2.message || 'update_failed');
 
         state.exists = true;
         $('#overviewDate').value = payload.date;
-        setMsg('#formMsg','ok', json.mode === 'update' ? '已覆蓋更新' : '新增儲存成功');
-      } catch(err){
-        setMsg('#formMsg','err',`儲存失敗：${err.message}`);
-      } finally {
-        state.saveBusy = false;
-        $('#saveBtn').disabled = false;
-        $('#saveBtn').textContent = '儲存';
-        setLoading(false);
-      }
-    }
-
-    function renderOverviewList(targetId, items, type){
-      const wrap = $(targetId);
-      wrap.innerHTML = '';
-
-      if (!items || !items.length){
-        wrap.innerHTML = `<div class="list-row"><div class="mini">無資料</div></div>`;
+        await loadOverview(true);
+        setMsg('#formMsg','ok','已覆蓋更新');
         return;
       }
 
-      items.forEach((x, i) => {
-        if (type === 'vehicle') {
-          wrap.insertAdjacentHTML('beforeend', `
-            <div class="list-row">
-              <div><span class="tag">第 ${i + 1} 筆</span></div>
-              <div>車種：${escapeHtml(x.type || '') || '-'}</div>
-              <div>數量：${intVal(x.qty)}</div>
-              <div>作業人數：${intVal(x.workers)}</div>
-            </div>
-          `);
-        } else {
-          wrap.insertAdjacentHTML('beforeend', `
-            <div class="list-row">
-              <div><span class="tag">第 ${i + 1} 筆</span></div>
-              <div>材料名稱：${escapeHtml(x.name || '') || '-'}</div>
-              <div>規格：${escapeHtml(x.spec || '') || '-'}</div>
-              <div>單位：${escapeHtml(x.unit || '') || '-'}</div>
-              <div>數量：${intVal(x.qty)}</div>
-            </div>
-          `);
-        }
-      });
+      throw new Error(json.message || 'save_failed');
     }
 
-    function renderOverview(data){
-      $('#dailyDirectTotal').textContent = intVal(data.dailyDirectTotal);
-      $('#dailyMeasuredTotal').textContent = intVal(data.dailyMeasuredTotal);
-      $('#cumDirectTotal').textContent = intVal(data.cumDirectTotal);
-      $('#cumMeasuredTotal').textContent = intVal(data.cumMeasuredTotal);
+    state.exists = true;
+    $('#overviewDate').value = payload.date;
+    await loadOverview(true);
+    setMsg('#formMsg','ok', json.mode === 'update' ? '已覆蓋更新' : '新增儲存成功');
+  } catch(err){
+    setMsg('#formMsg','err',`儲存失敗：${err.message}`);
+  } finally {
+    state.saveBusy = false;
+    $('#saveBtn').disabled = false;
+    $('#saveBtn').textContent = '儲存';
+    setLoading(false);
+  }
+}
 
-      $('#ovSite').textContent = data.siteName || '桃園地三航廈-機電工程';
-      $('#ovDate').textContent = data.date || '-';
-      $('#ovReporter').textContent = data.reporter || '-';
-      $('#ovArea').textContent = data.area || '-';
-      $('#ovWorkItem').textContent = data.workItem || '-';
-      $('#ovIssue').textContent = data.issue || '-';
-      $('#ovWorkTime').textContent = `${data.workStart || '-'} ~ ${data.workEnd || '-'}`;
-      $('#ovOT').textContent = `點工 ${intVal(data.otDirect)} 人 / 計價 ${intVal(data.otMeasured)} 人｜${data.otStart || '-'} ~ ${data.otEnd || '-'}`;
-      $('#ovUpdatedAt').textContent = data.updatedAt || '-';
+function bindEvents(){
+  $$('.tab').forEach(btn => {
+    btn.addEventListener('click', () => switchPage(btn.dataset.page));
+  });
 
-      $('#ovDirect').textContent = `施工 ${intVal(data.directConstruction)} / 運輸 ${intVal(data.directTransport)} / 管理 ${intVal(data.directManagement)} / 其它 ${intVal(data.directOther)}`;
-      $('#ovMeasured').textContent = `施工 ${intVal(data.measuredConstruction)} / 運輸 ${intVal(data.measuredTransport)} / 管理 ${intVal(data.measuredManagement)} / 其它 ${intVal(data.measuredOther)}`;
+  $('#addVehicleBtn').addEventListener('click', () => addVehicle());
+  $('#addMaterialBtn').addEventListener('click', () => addMaterial());
 
-      renderOverviewList('#ovVehicles', data.vehicles || [], 'vehicle');
-      renderOverviewList('#ovMaterials', data.materials || [], 'material');
-    }
+  $('#vehiclesWrap').addEventListener('click', e => {
+    const btn = e.target.closest('.del-vehicle-btn');
+    if (!btn) return;
+    const item = btn.closest('.vehicle-item');
+    if (item) item.remove();
+    ensureDefaultRows();
+  });
 
-    async function loadOverview(){
-      if (state.overviewBusy) return;
+  $('#materialsWrap').addEventListener('click', e => {
+    const btn = e.target.closest('.del-material-btn');
+    if (!btn) return;
+    const item = btn.closest('.material-item');
+    if (item) item.remove();
+    ensureDefaultRows();
+  });
 
-      clearMsg('#overviewMsg');
-      const date = normalizeDate($('#overviewDate').value);
+  $('#loadBtn').addEventListener('click', () => loadReport(false));
+  $('#saveBtn').addEventListener('click', saveReport);
+  $('#overviewBtn').addEventListener('click', () => loadOverview(false));
 
-      if (!date){
-        setMsg('#overviewMsg','err','請先選擇日期');
-        return;
-      }
+  $('#newBtn').addEventListener('click', () => {
+    state.exists = false;
+    clearForm(true);
+    $('#date').value = todayStr();
+    setMsg('#formMsg','info','已清空目前內容');
+  });
 
-      state.overviewBusy = true;
-      $('#overviewBtn').disabled = true;
-      setLoading(true);
+  $('#reporter').addEventListener('change', () => {
+    localStorage.setItem('reporter_name', $('#reporter').value.trim());
+  });
 
-      try{
-        const url = `${API_URL}?action=getOverview&date=${encodeURIComponent(date)}&_=${Date.now()}`;
-        const res = await timeoutFetch(url,{method:'GET'},20000);
-        const json = await res.json();
+  $('#date').addEventListener('change', async () => {
+    state.exists = false;
+    clearMsg('#formMsg');
+    await loadReport(true);
+  });
 
-        if (!json.ok) throw new Error(json.message || 'overview_failed');
+  $('#overviewDate').addEventListener('change', async () => {
+    clearMsg('#overviewMsg');
+    await loadOverview(true);
+  });
+}
 
-        if (!json.exists){
-          renderOverview({
-            siteName:'桃園地三航廈-機電工程',
-            date,
-            vehicles:[],
-            materials:[]
-          });
-          setMsg('#overviewMsg','info','當日尚無資料');
-          return;
-        }
+async function init(){
+  $('#date').value = todayStr();
+  $('#overviewDate').value = todayStr();
+  $('#siteName').value = '桃園地三航廈-機電工程';
 
-        renderOverview(json.data);
-        setMsg('#overviewMsg','ok','查詢完成');
-      } catch(err){
-        setMsg('#overviewMsg','err',`查詢失敗：${err.message}`);
-      } finally {
-        state.overviewBusy = false;
-        $('#overviewBtn').disabled = false;
-        setLoading(false);
-      }
-    }
+  const savedReporter = localStorage.getItem('reporter_name') || '';
+  if (savedReporter) $('#reporter').value = savedReporter;
 
-    function bindEvents(){
-      $$('.tab').forEach(btn => {
-        btn.addEventListener('click', () => switchPage(btn.dataset.page));
-      });
+  ensureDefaultRows();
+  bindEvents();
 
-      $('#addVehicleBtn').addEventListener('click', () => addVehicle());
-      $('#addMaterialBtn').addEventListener('click', () => addMaterial());
+  try{
+    const res = await timeoutFetch(`${API_URL}?action=ping&_=${Date.now()}`, { method:'GET' }, 12000);
+    const json = await res.json();
+    if (!json.ok) throw new Error('api_unavailable');
+  } catch(err){
+    setMsg('#formMsg','err','API 連線失敗，請檢查 Apps Script Web App URL 與部署權限');
+    return;
+  }
 
-      $('#vehiclesWrap').addEventListener('click', e => {
-        const btn = e.target.closest('.del-vehicle-btn');
-        if (!btn) return;
-        const item = btn.closest('.vehicle-item');
-        if (item) item.remove();
-        ensureDefaultRows();
-      });
+  await loadReport(true);
+  await loadOverview(true);
+}
 
-      $('#materialsWrap').addEventListener('click', e => {
-        const btn = e.target.closest('.del-material-btn');
-        if (!btn) return;
-        const item = btn.closest('.material-item');
-        if (item) item.remove();
-        ensureDefaultRows();
-      });
-
-      $('#loadBtn').addEventListener('click', loadReport);
-      $('#saveBtn').addEventListener('click', saveReport);
-      $('#overviewBtn').addEventListener('click', loadOverview);
-
-      $('#newBtn').addEventListener('click', () => {
-        state.exists = false;
-        clearForm(true);
-        $('#date').value = todayStr();
-        setMsg('#formMsg','info','已清空目前內容');
-      });
-
-      $('#reporter').addEventListener('change', () => {
-        localStorage.setItem('reporter_name', $('#reporter').value.trim());
-      });
-
-      $('#date').addEventListener('change', () => {
-        state.exists = false;
-        clearMsg('#formMsg');
-      });
-
-      $('#overviewDate').addEventListener('change', () => {
-        clearMsg('#overviewMsg');
-      });
-    }
-
-    async function init(){
-      $('#date').value = todayStr();
-      $('#overviewDate').value = todayStr();
-      $('#siteName').value = '桃園地三航廈-機電工程';
-
-      const savedReporter = localStorage.getItem('reporter_name') || '';
-      if (savedReporter) $('#reporter').value = savedReporter;
-
-      ensureDefaultRows();
-      bindEvents();
-
-      try{
-        const res = await timeoutFetch(`${API_URL}?action=ping&_=${Date.now()}`,{method:'GET'},12000);
-        const json = await res.json();
-        if (!json.ok) throw new Error('api_unavailable');
-      } catch(err){
-        setMsg('#formMsg','err','API 連線失敗，請檢查 Apps Script Web App URL 與部署權限');
-      }
-    }
-
-    init();
-  </script>
-</body>
-</html>
+init();
+</script>
