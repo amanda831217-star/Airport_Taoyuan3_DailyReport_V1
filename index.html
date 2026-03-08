@@ -1,507 +1,536 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>桃園地三航廈施工填報</title>
-  <style>
-    :root{
-      --bg1:#8fd1ff;
-      --bg2:#dff3ff;
-      --bg3:#f5fbff;
-      --card:rgba(255,255,255,.92);
-      --line:#dbeafe;
-      --text:#0f172a;
-      --muted:#64748b;
-      --blue:#1d4ed8;
-      --blue2:#0f5cc0;
-      --soft:#e0f2fe;
-      --shadow:0 18px 45px rgba(15,23,42,.12);
-      --radius:22px;
-    }
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{margin:0;padding:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text);background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 40%,var(--bg3) 100%)}
-    body{max-width:840px;margin:0 auto;padding:14px 12px 32px}
-    .hero{position:relative;overflow:hidden;min-height:220px;border-radius:28px;box-shadow:var(--shadow);background:linear-gradient(180deg,rgba(14,77,171,.28),rgba(255,255,255,.04)),url("./plane.jpg") center center/cover no-repeat}
-    .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,50,100,.18),rgba(255,255,255,.03) 35%,rgba(255,255,255,.70) 100%)}
-    .hero-inner{position:relative;z-index:2;min-height:220px;padding:18px;display:flex;flex-direction:column;justify-content:space-between}
-    .hero-badge{display:inline-flex;align-self:flex-start;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.78);color:#0f3e86;font-size:12px;font-weight:900;letter-spacing:.4px}
-    .hero-title{margin-top:10px;font-size:28px;font-weight:900;line-height:1.15;color:#082e69;text-shadow:0 1px 0 rgba(255,255,255,.6)}
-    .hero-sub{margin-top:8px;color:#123d78;font-size:13px;font-weight:700}
-    .tabs{display:flex;gap:10px;margin-top:14px}
-    .tab{flex:1;border:0;border-radius:16px;padding:13px 14px;background:rgba(255,255,255,.82);color:#0f3e86;font-size:15px;font-weight:900;box-shadow:0 10px 24px rgba(15,23,42,.08);cursor:pointer}
-    .tab.active{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff}
-    .page{display:none}.page.active{display:block}
-    .card{margin-top:14px;background:var(--card);border:1px solid rgba(255,255,255,.5);backdrop-filter:blur(14px);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
-    .section-title{margin:0 0 12px;font-size:18px;font-weight:900;color:#08336b}
-    .section-sub{margin:-4px 0 12px;color:var(--muted);font-size:12px;font-weight:700}
-    .grid{display:grid;gap:12px}.grid-2{grid-template-columns:1fr 1fr}
-    .field label{display:block;font-size:13px;font-weight:900;color:#174076;margin:0 0 8px}
-    .field .en{color:var(--muted);margin-left:5px;font-weight:700;font-size:12px}
-    input,textarea{width:100%;border:1px solid var(--line);background:rgba(255,255,255,.96);color:var(--text);border-radius:16px;padding:13px 14px;font-size:16px;outline:none;transition:.18s ease}
-    textarea{resize:vertical;min-height:92px}
-    input:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 4px rgba(59,130,246,.12)}
-    input[readonly]{background:#edf6ff;color:#0f3e86;font-weight:800}
-    .action-row{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
-    .btn{border:0;border-radius:16px;padding:14px 16px;font-size:15px;font-weight:900;cursor:pointer;transition:.18s ease}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
-    .btn-primary{color:#fff;background:linear-gradient(135deg,var(--blue),var(--blue2));box-shadow:0 10px 25px rgba(37,99,235,.24)}
-    .btn-soft{color:#0f3e86;background:var(--soft)}
-    .btn-line{color:#174076;background:#fff;border:1px solid var(--line)}
-    .btn-danger{color:#991b1b;background:#fee2e2}
-    .msg{display:none;margin-top:12px;border-radius:16px;padding:12px 14px;font-size:14px;font-weight:900}
-    .msg.show{display:block}.msg.ok{background:#dcfce7;color:#166534}.msg.err{background:#fee2e2;color:#991b1b}.msg.info{background:#e0f2fe;color:#075985}
-    .row-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
-    .mini{font-size:12px;color:var(--muted);font-weight:700}
-    .repeat-item{border:1px solid var(--line);background:rgba(255,255,255,.88);border-radius:18px;padding:12px;margin-top:10px}
-    .repeat-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
-    .repeat-title{font-size:13px;font-weight:900;color:#13407b}
-    .sticky-actions{position:sticky;bottom:10px;z-index:30;margin-top:16px;padding:10px;border-radius:22px;background:rgba(240,248,255,.88);backdrop-filter:blur(16px);box-shadow:0 14px 36px rgba(15,23,42,.08)}
-    .sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .sum-box{padding:16px;border-radius:18px;background:linear-gradient(135deg,#ffffff,#edf6ff);border:1px solid #dbeafe}
-    .sum-label{font-size:12px;font-weight:900;color:#1751a6}.sum-num{margin-top:6px;font-size:30px;font-weight:900;color:#082e69}
-    .overview-block{margin-top:14px;padding-top:14px;border-top:1px dashed #bfdbfe}
-    .kv{display:grid;grid-template-columns:96px 1fr;gap:8px 12px;font-size:15px;line-height:1.55}
-    .k{color:var(--muted);font-weight:900}
-    .v{color:#0f172a;font-weight:800;white-space:pre-wrap;word-break:break-word}
-    .loading{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.5);backdrop-filter:blur(3px);z-index:999}
-    .loading.show{display:flex}
-    .loading-box{padding:16px 18px;border-radius:18px;background:#fff;box-shadow:var(--shadow);font-weight:900;color:#0f3e86}
-    @media (max-width:760px){.grid-2,.sum-grid{grid-template-columns:1fr}.hero-title{font-size:24px}.kv{grid-template-columns:82px 1fr}}
-  </style>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>桃園第三航廈施工日報</title>
+
+<style>
+
+body{
+margin:0;
+font-family:-apple-system,BlinkMacSystemFont;
+background:#0f172a;
+color:white;
+}
+
+header{
+background:#020617;
+padding:14px;
+text-align:center;
+font-size:18px;
+font-weight:600;
+border-bottom:1px solid #334155;
+}
+
+.container{
+max-width:700px;
+margin:auto;
+padding:14px;
+}
+
+.card{
+background:#1e293b;
+padding:14px;
+border-radius:10px;
+margin-bottom:14px;
+}
+
+.card-title{
+font-size:16px;
+margin-bottom:10px;
+}
+
+input,textarea{
+width:100%;
+padding:8px;
+margin-bottom:8px;
+border-radius:6px;
+border:1px solid #334155;
+background:#020617;
+color:white;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+}
+
+button{
+width:100%;
+padding:10px;
+border:none;
+border-radius:8px;
+background:#0ea5e9;
+color:white;
+font-size:15px;
+margin-top:8px;
+}
+
+button:hover{
+background:#0284c7;
+}
+
+.list{
+background:#020617;
+padding:10px;
+border-radius:8px;
+}
+
+.msg{
+padding:8px;
+border-radius:6px;
+margin-top:6px;
+font-size:13px;
+display:none;
+}
+
+.msg.show{
+display:block;
+}
+
+.msg.err{background:#7f1d1d}
+.msg.ok{background:#065f46}
+.msg.info{background:#1e3a8a}
+
+.loading{
+display:none;
+text-align:center;
+padding:10px;
+}
+
+.loading.show{
+display:block;
+}
+
+</style>
+
 </head>
+
+
 <body>
-  <div class="loading" id="loading"><div class="loading-box">處理中...</div></div>
 
-  <div class="hero">
-    <div class="hero-inner">
-      <div class="hero-badge">TAOYUAN AIRPORT • DAILY REPORT</div>
-      <div>
-        <div class="hero-title">桃園地三航廈施工填報</div>
-        <div class="hero-sub"></div>
-      </div>
-    </div>
-  </div>
+<header>
+桃園第三航廈｜機電工程施工日報
+</header>
 
-  <div class="tabs">
-    <button class="tab active" data-page="formPage" type="button">填報</button>
-    <button class="tab" data-page="overviewPage" type="button">總覽</button>
-  </div>
 
-  <section class="page active" id="formPage">
-    <div class="card">
-      <div class="section-title">基本資料</div>
-      <div class="grid grid-2">
-        <div class="field"><label>日期 <span class="en">Date</span></label><input type="date" id="date"></div>
-        <div class="field"><label>案場 <span class="en">Site</span></label><input type="text" id="siteName" readonly></div>
-      </div>
-      <div class="grid" style="margin-top:12px;">
-        <div class="field"><label>填報人 <span class="en">Reporter</span></label><input type="text" id="reporter" placeholder="請輸入填報人"></div>
-      </div>
-      <div class="action-row">
-        <button class="btn btn-line" id="newBtn" type="button">清空目前內容</button>
-      </div>
-      <div class="msg info" id="formMsg"></div>
-    </div>
+<div class="container">
 
-    <div class="card">
-      <div class="section-title">施工資訊</div>
-      <div class="grid">
-        <div class="field"><label>區域 <span class="en">Area</span></label><textarea id="area" placeholder="請輸入區域"></textarea></div>
-        <div class="field"><label>今日施工項目 <span class="en">Today's Work Item</span></label><textarea id="workItem" placeholder="請輸入今日施工項目"></textarea></div>
-        <div class="field"><label>Issue <span class="en">Issue</span></label><textarea id="issue" placeholder="請輸入 Issue"></textarea></div>
-      </div>
-    </div>
+<div id="loading" class="loading">Loading...</div>
 
-    <div class="card">
-      <div class="section-title">人力</div>
-      <div class="section-sub">點工與計價同頁顯示</div>
-      <div class="grid grid-2">
-        <div class="field"><label>點工-施工</label><input type="number" id="directConstruction" min="0" step="1" value="0"></div>
-        <div class="field"><label>計價-施工</label><input type="number" id="measuredConstruction" min="0" step="1" value="0"></div>
-        <div class="field"><label>點工-運輸</label><input type="number" id="directTransport" min="0" step="1" value="0"></div>
-        <div class="field"><label>計價-運輸</label><input type="number" id="measuredTransport" min="0" step="1" value="0"></div>
-        <div class="field"><label>點工-管理</label><input type="number" id="directManagement" min="0" step="1" value="0"></div>
-        <div class="field"><label>計價-管理</label><input type="number" id="measuredManagement" min="0" step="1" value="0"></div>
-        <div class="field"><label>點工-其它</label><input type="number" id="directOther" min="0" step="1" value="0"></div>
-        <div class="field"><label>計價-其它</label><input type="number" id="measuredOther" min="0" step="1" value="0"></div>
-      </div>
-      <div class="grid grid-2" style="margin-top:12px;">
-        <div class="field"><label>出工時間</label><input type="time" id="workStart"></div>
-        <div class="field"><label>收工時間</label><input type="time" id="workEnd"></div>
-      </div>
-      <div class="overview-block">
-        <div class="section-title" style="font-size:16px;">加班工時</div>
-        <div class="grid grid-2">
-          <div class="field"><label>點工人數</label><input type="number" id="otDirect" min="0" step="1" value="0"></div>
-          <div class="field"><label>計價人數</label><input type="number" id="otMeasured" min="0" step="1" value="0"></div>
-          <div class="field"><label>加班開始時間</label><input type="time" id="otStart"></div>
-          <div class="field"><label>加班收工時間</label><input type="time" id="otEnd"></div>
-        </div>
-      </div>
-    </div>
 
-    <div class="card">
-      <div class="row-head">
-        <div><div class="section-title" style="margin:0;">車輛及機具</div><div class="mini">車種、數量、作業人數</div></div>
-        <button class="btn btn-soft" type="button" id="addVehicleBtn">新增</button>
-      </div>
-      <div id="vehiclesWrap"></div>
-    </div>
+<div class="card">
 
-    <div class="card">
-      <div class="row-head">
-        <div><div class="section-title" style="margin:0;">材料（自購）</div><div class="mini">材料名稱、規格、單位、數量</div></div>
-        <button class="btn btn-soft" type="button" id="addMaterialBtn">新增</button>
-      </div>
-      <div id="materialsWrap"></div>
-    </div>
+<div class="card-title">基本資料</div>
 
-    <div class="sticky-actions"><button class="btn btn-primary" id="saveBtn" type="button" style="width:100%;">儲存</button></div>
-  </section>
+<input id="date" type="date">
+<input id="reporter" placeholder="填報人">
 
-  <section class="page" id="overviewPage">
-    <div class="card">
-      <div class="section-title">總覽查詢</div>
-      <div class="grid grid-2">
-        <div class="field"><label>日期 <span class="en">Date</span></label><input type="date" id="overviewDate"></div>
-        <div class="field" style="align-self:end;"><button class="btn btn-primary" id="overviewBtn" type="button" style="width:100%;">查詢</button></div>
-      </div>
-      <div class="msg info" id="overviewMsg"></div>
-    </div>
+<input id="area" placeholder="施工區域">
 
-    <div class="card">
-      <div class="section-title">當日資訊</div>
-      <div class="sum-grid">
-        <div class="sum-box"><div class="sum-label">當日點工人數</div><div class="sum-num" id="dailyDirectTotal">0</div></div>
-        <div class="sum-box"><div class="sum-label">當日計價人數</div><div class="sum-num" id="dailyMeasuredTotal">0</div></div>
-        <div class="sum-box"><div class="sum-label">累計點工人數</div><div class="sum-num" id="cumDirectTotal">0</div></div>
-        <div class="sum-box"><div class="sum-label">累計計價人數</div><div class="sum-num" id="cumMeasuredTotal">0</div></div>
-      </div>
+<textarea id="workItem" placeholder="今日施工項目"></textarea>
 
-      <div class="overview-block">
-        <div class="kv">
-          <div class="k">案場</div><div class="v" id="ovSite">-</div>
-          <div class="k">日期</div><div class="v" id="ovDate">-</div>
-          <div class="k">填報人</div><div class="v" id="ovReporter">-</div>
-          <div class="k">區域</div><div class="v" id="ovArea">-</div>
-          <div class="k">施工項目</div><div class="v" id="ovWorkItem">-</div>
-          <div class="k">Issue</div><div class="v" id="ovIssue">-</div>
-          <div class="k">工時</div><div class="v" id="ovWorkTime">-</div>
-          <div class="k">加班</div><div class="v" id="ovOT">-</div>
-          <div class="k">更新時間</div><div class="v" id="ovUpdatedAt">-</div>
-        </div>
-      </div>
+<textarea id="issue" placeholder="Issue"></textarea>
 
-      <div class="overview-block">
-        <div class="section-title" style="font-size:16px;">人力與資源資訊</div>
-        <div class="kv">
-          <div class="k">點工</div><div class="v" id="ovDirect">-</div>
-          <div class="k">計價</div><div class="v" id="ovMeasured">-</div>
-          <div class="k">車輛機具</div><div class="v" id="ovVehicles">-</div>
-          <div class="k">材料自購</div><div class="v" id="ovMaterials">-</div>
-        </div>
-      </div>
-    </div>
-  </section>
+</div>
 
-  <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwvw1fyJ56kGHiPB_aupVxxoVTaUbd0QmX8EQnxrk7sgjgZaS65WPy3KmuFR_wWJhNh/exec';
-    const $ = s => document.querySelector(s);
-    const $$ = s => [...document.querySelectorAll(s)];
-    const state = { saveBusy:false, overviewBusy:false };
 
-    function setLoading(v){ const el=$('#loading'); if(el) el.classList.toggle('show', v); }
-    function setMsg(id, type, text){ const el=$(id); if(!el) return; el.className=`msg ${type} show`; el.textContent=text; }
-    function clearMsg(id){ const el=$(id); if(!el) return; el.className='msg'; el.textContent=''; }
-    function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-    function normalizeDate(v){ return String(v || '').trim().replace(/\//g, '-'); }
-    function intVal(v){ const n=Number(v); return isNaN(n) ? 0 : n; }
-    function escapeHtml(str){ return String(str || '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;"); }
-    function timeoutFetch(url, options={}, ms=25000){ return Promise.race([fetch(url, options), new Promise((_, reject)=>setTimeout(()=>reject(new Error('request_timeout')), ms))]); }
-    function switchPage(pageId){ $$('.tab').forEach(btn=>btn.classList.toggle('active', btn.dataset.page===pageId)); $$('.page').forEach(p=>p.classList.toggle('active', p.id===pageId)); }
 
-    function formatDateOnly(v){
-      if(!v) return '-';
-      if(typeof v === 'string'){
-        if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
-        const m=v.match(/^(\d{4}-\d{2}-\d{2})/);
-        if(m) return m[1];
-      }
-      const d=new Date(v);
-      if(isNaN(d.getTime())) return String(v);
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
+<div class="card">
 
-    function formatTimeOnly(v){
-      if(!v) return '-';
-      if(typeof v === 'string'){
-        const hm=v.match(/^(\d{1,2}):(\d{2})/);
-        if(hm) return `${hm[1].padStart(2,'0')}:${hm[2]}`;
-        const iso=v.match(/T(\d{2}):(\d{2})/);
-        if(iso) return `${iso[1]}:${iso[2]}`;
-      }
-      const d=new Date(v);
-      if(isNaN(d.getTime())) return String(v);
-      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    }
+<div class="card-title">人力</div>
 
-    function formatDateTime(v){
-      if(!v) return '-';
-      const d=new Date(v);
-      if(isNaN(d.getTime())){
-        const datePart=formatDateOnly(v);
-        const timePart=formatTimeOnly(v);
-        if(datePart==='-' && timePart==='-') return String(v);
-        if(timePart==='-') return datePart;
-        return `${datePart} ${timePart}`;
-      }
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    }
+<div class="grid">
 
-    function formatRange(start,end){
-      const s=formatTimeOnly(start); const e=formatTimeOnly(end);
-      if(s==='-' && e==='-') return '-';
-      return `${s} ~ ${e}`;
-    }
+<input id="directConstruction" type="number" placeholder="點工施工">
+<input id="measuredConstruction" type="number" placeholder="計價施工">
 
-    function formatVehicleSummary(items){
-      if(!items || !items.length) return '無資料';
-      return items.map(x=>`• ${x.type || '-'} × ${intVal(x.qty)}（${intVal(x.workers)}人）`).join('\n');
-    }
+<input id="directTransport" type="number" placeholder="點工運輸">
+<input id="measuredTransport" type="number" placeholder="計價運輸">
 
-    function formatMaterialSummary(items){
-      if(!items || !items.length) return '無資料';
-      return items.map(x=>`• ${x.name || '-'} / ${x.spec || '-'} / ${x.unit || '-'} / ${intVal(x.qty)}`).join('\n');
-    }
+<input id="directManagement" type="number" placeholder="點工管理">
+<input id="measuredManagement" type="number" placeholder="計價管理">
 
-    function vehicleTemplate(item={}){
-      return `<div class="repeat-item vehicle-item"><div class="repeat-top"><div class="repeat-title">車輛 / 機具</div><button class="btn btn-danger del-vehicle-btn" type="button">刪除</button></div><div class="grid"><div class="field"><label>車種</label><input type="text" class="vehicle-type" value="${escapeHtml(item.type || '')}" placeholder="請輸入車種"></div><div class="field"><label>數量</label><input type="number" class="vehicle-qty" min="0" step="1" value="${intVal(item.qty)}"></div><div class="field"><label>作業人數</label><input type="number" class="vehicle-workers" min="0" step="1" value="${intVal(item.workers)}"></div></div></div>`;
-    }
+<input id="directOther" type="number" placeholder="點工其他">
+<input id="measuredOther" type="number" placeholder="計價其他">
 
-    function materialTemplate(item={}){
-      return `<div class="repeat-item material-item"><div class="repeat-top"><div class="repeat-title">材料（自購）</div><button class="btn btn-danger del-material-btn" type="button">刪除</button></div><div class="grid"><div class="field"><label>材料名稱</label><input type="text" class="material-name" value="${escapeHtml(item.name || '')}" placeholder="請輸入材料名稱"></div><div class="field"><label>規格</label><input type="text" class="material-spec" value="${escapeHtml(item.spec || '')}" placeholder="請輸入規格"></div><div class="field"><label>單位</label><input type="text" class="material-unit" value="${escapeHtml(item.unit || '')}" placeholder="請輸入單位"></div><div class="field"><label>數量</label><input type="number" class="material-qty" min="0" step="1" value="${intVal(item.qty)}"></div></div></div>`;
-    }
+</div>
 
-    function addVehicle(item={}){ $('#vehiclesWrap').insertAdjacentHTML('beforeend', vehicleTemplate(item)); }
-    function addMaterial(item={}){ $('#materialsWrap').insertAdjacentHTML('beforeend', materialTemplate(item)); }
-    function ensureDefaultRows(){ if(!$('#vehiclesWrap').children.length) addVehicle(); if(!$('#materialsWrap').children.length) addMaterial(); }
+<div class="grid">
 
-    function clearForm(keepReporter=true){
-      const reporter=keepReporter ? $('#reporter').value.trim() : '';
-      $('#siteName').value='桃園地三航廈-機電工程';
-      $('#reporter').value=reporter;
-      $('#area').value=''; $('#workItem').value=''; $('#issue').value='';
-      $('#directConstruction').value=0; $('#directTransport').value=0; $('#directManagement').value=0; $('#directOther').value=0;
-      $('#measuredConstruction').value=0; $('#measuredTransport').value=0; $('#measuredManagement').value=0; $('#measuredOther').value=0;
-      $('#workStart').value=''; $('#workEnd').value='';
-      $('#otDirect').value=0; $('#otMeasured').value=0; $('#otStart').value=''; $('#otEnd').value='';
-      $('#vehiclesWrap').innerHTML=''; $('#materialsWrap').innerHTML=''; ensureDefaultRows();
-    }
+<input id="workStart" type="time">
+<input id="workEnd" type="time">
 
-    function clearOverview(){
-      $('#dailyDirectTotal').textContent='0'; $('#dailyMeasuredTotal').textContent='0'; $('#cumDirectTotal').textContent='0'; $('#cumMeasuredTotal').textContent='0';
-      $('#ovSite').textContent='-'; $('#ovDate').textContent='-'; $('#ovReporter').textContent='-'; $('#ovArea').textContent='-'; $('#ovWorkItem').textContent='-';
-      $('#ovIssue').textContent='-'; $('#ovWorkTime').textContent='-'; $('#ovOT').textContent='-'; $('#ovUpdatedAt').textContent='-';
-      $('#ovDirect').textContent='-'; $('#ovMeasured').textContent='-'; $('#ovVehicles').textContent='-'; $('#ovMaterials').textContent='-';
-    }
+</div>
 
-    function collectVehicles(){ return $$('.vehicle-item').map(item=>({type:item.querySelector('.vehicle-type').value.trim(), qty:intVal(item.querySelector('.vehicle-qty').value), workers:intVal(item.querySelector('.vehicle-workers').value)})).filter(x=>x.type||x.qty||x.workers); }
-    function collectMaterials(){ return $$('.material-item').map(item=>({name:item.querySelector('.material-name').value.trim(), spec:item.querySelector('.material-spec').value.trim(), unit:item.querySelector('.material-unit').value.trim(), qty:intVal(item.querySelector('.material-qty').value)})).filter(x=>x.name||x.spec||x.unit||x.qty); }
+</div>
 
-    function collectPayload(action){
-      return {
-        action,
-        date:normalizeDate($('#date').value),
-        reporter:$('#reporter').value.trim(),
-        area:$('#area').value.trim(),
-        workItem:$('#workItem').value.trim(),
-        issue:$('#issue').value.trim(),
-        directConstruction:intVal($('#directConstruction').value),
-        directTransport:intVal($('#directTransport').value),
-        directManagement:intVal($('#directManagement').value),
-        directOther:intVal($('#directOther').value),
-        measuredConstruction:intVal($('#measuredConstruction').value),
-        measuredTransport:intVal($('#measuredTransport').value),
-        measuredManagement:intVal($('#measuredManagement').value),
-        measuredOther:intVal($('#measuredOther').value),
-        workStart:$('#workStart').value,
-        workEnd:$('#workEnd').value,
-        otDirect:intVal($('#otDirect').value),
-        otMeasured:intVal($('#otMeasured').value),
-        otStart:$('#otStart').value,
-        otEnd:$('#otEnd').value,
-        vehicles:collectVehicles(),
-        materials:collectMaterials()
-      };
-    }
 
-    function renderOverview(data){
-      $('#dailyDirectTotal').textContent=String(intVal(data.dailyDirectTotal));
-      $('#dailyMeasuredTotal').textContent=String(intVal(data.dailyMeasuredTotal));
-      $('#cumDirectTotal').textContent=String(intVal(data.cumDirectTotal));
-      $('#cumMeasuredTotal').textContent=String(intVal(data.cumMeasuredTotal));
-      $('#ovSite').textContent=data.siteName || '桃園地三航廈-機電工程';
-      $('#ovDate').textContent=formatDateOnly(data.date);
-      $('#ovReporter').textContent=data.reporter || '-';
-      $('#ovArea').textContent=data.area || '-';
-      $('#ovWorkItem').textContent=data.workItem || '-';
-      $('#ovIssue').textContent=data.issue || '-';
-      $('#ovWorkTime').textContent=formatRange(data.workStart, data.workEnd);
-      $('#ovOT').textContent=`點工 ${intVal(data.otDirect)} 人 / 計價 ${intVal(data.otMeasured)} 人｜${formatRange(data.otStart, data.otEnd)}`;
-      $('#ovUpdatedAt').textContent=formatDateTime(data.updatedAt);
-      $('#ovDirect').textContent=`施工 ${intVal(data.directConstruction)} / 運輸 ${intVal(data.directTransport)} / 管理 ${intVal(data.directManagement)} / 其它 ${intVal(data.directOther)}`;
-      $('#ovMeasured').textContent=`施工 ${intVal(data.measuredConstruction)} / 運輸 ${intVal(data.measuredTransport)} / 管理 ${intVal(data.measuredManagement)} / 其它 ${intVal(data.measuredOther)}`;
-      $('#ovVehicles').textContent=formatVehicleSummary(data.vehicles || []);
-      $('#ovMaterials').textContent=formatMaterialSummary(data.materials || []);
-    }
 
-    async function loadOverview(showMessage=true){
-      if(state.overviewBusy) return;
-      clearMsg('#overviewMsg');
-      const date=normalizeDate($('#overviewDate').value);
-      if(!date){ if(showMessage) setMsg('#overviewMsg','err','請先選擇日期'); return; }
+<div class="card">
 
-      state.overviewBusy=true;
-      $('#overviewBtn').disabled=true;
-      setLoading(true);
-      try{
-        const url=`${API_URL}?action=getReport&date=${encodeURIComponent(date)}&_=${Date.now()}`;
-        const res=await timeoutFetch(url,{method:'GET'},20000);
-        const text=await res.text();
-        const json=JSON.parse(text);
-        if(!json.ok) throw new Error(json.message || 'overview_failed');
+<div class="card-title">加班</div>
 
-        if(!json.exists){
-          clearOverview();
-          $('#ovDate').textContent=date;
-          $('#ovSite').textContent='桃園地三航廈-機電工程';
-          if(showMessage) setMsg('#overviewMsg','info','當日尚無資料');
-          return;
-        }
+<div class="grid">
 
-        renderOverview(json.data);
-        if(showMessage) setMsg('#overviewMsg','ok','查詢完成');
-      }catch(err){
-        clearOverview();
-        setMsg('#overviewMsg','err',`查詢失敗：${err.message}`);
-      }finally{
-        state.overviewBusy=false;
-        $('#overviewBtn').disabled=false;
-        setLoading(false);
-      }
-    }
+<input id="otDirect" type="number" placeholder="點工">
+<input id="otMeasured" type="number" placeholder="計價">
 
-    async function saveReport(){
-      if(state.saveBusy) return;
-      clearMsg('#formMsg');
+<input id="otStart" type="time">
+<input id="otEnd" type="time">
 
-      const date=normalizeDate($('#date').value);
-      if(!date){ setMsg('#formMsg','err','請選擇日期'); return; }
+</div>
 
-      const reporter=$('#reporter').value.trim();
-      if(!reporter){ setMsg('#formMsg','err','請輸入填報人'); $('#reporter').focus(); return; }
+</div>
 
-      let action='createReport';
 
-      try{
-        const checkUrl=`${API_URL}?action=getReport&date=${encodeURIComponent(date)}&_=${Date.now()}`;
-        const checkRes=await timeoutFetch(checkUrl,{method:'GET'},20000);
-        const checkText=await checkRes.text();
-        const checkJson=JSON.parse(checkText);
 
-        if(checkJson.ok && checkJson.exists){
-          const yes=window.confirm('此日期已有資料，是否覆蓋？');
-          if(!yes) return;
-          action='updateReport';
-        }
-      }catch(err){
-        setMsg('#formMsg','err',`日期檢查失敗：${err.message}`);
-        return;
-      }
+<div class="card">
 
-      const payload=collectPayload(action);
+<div class="card-title">車輛 / 機具</div>
 
-      state.saveBusy=true;
-      $('#saveBtn').disabled=true;
-      $('#saveBtn').textContent='儲存中...';
-      setLoading(true);
+<div id="vehiclesWrap"></div>
 
-      try{
-        localStorage.setItem('reporter_name', reporter);
-        const body=new URLSearchParams();
-        Object.keys(payload).forEach(k=>body.append(k, typeof payload[k] === 'object' ? JSON.stringify(payload[k]) : payload[k]));
-        const res=await timeoutFetch(API_URL,{method:'POST', body},25000);
-        const text=await res.text();
-        const json=JSON.parse(text);
-        if(!json.ok) throw new Error(json.message || 'save_failed');
+<button id="addVehicleBtn">新增車輛</button>
 
-        $('#overviewDate').value=payload.date;
-        await loadOverview(false);
-        setMsg('#formMsg','ok', action === 'updateReport' ? '已覆蓋更新' : '新增儲存成功');
-      }catch(err){
-        setMsg('#formMsg','err',`儲存失敗：${err.message}`);
-      }finally{
-        state.saveBusy=false;
-        $('#saveBtn').disabled=false;
-        $('#saveBtn').textContent='儲存';
-        setLoading(false);
-      }
-    }
+</div>
 
-    function bindEvents(){
-      $$('.tab').forEach(btn=>btn.addEventListener('click', ()=>switchPage(btn.dataset.page)));
-      $('#addVehicleBtn').addEventListener('click', ()=>addVehicle());
-      $('#addMaterialBtn').addEventListener('click', ()=>addMaterial());
 
-      $('#vehiclesWrap').addEventListener('click', e=>{
-        const btn=e.target.closest('.del-vehicle-btn');
-        if(!btn) return;
-        const item=btn.closest('.vehicle-item');
-        if(item) item.remove();
-        ensureDefaultRows();
-      });
 
-      $('#materialsWrap').addEventListener('click', e=>{
-        const btn=e.target.closest('.del-material-btn');
-        if(!btn) return;
-        const item=e.target.closest('.material-item');
-        if(item) item.remove();
-        ensureDefaultRows();
-      });
+<div class="card">
 
-      $('#saveBtn').addEventListener('click', saveReport);
-      $('#overviewBtn').addEventListener('click', ()=>loadOverview(true));
-      $('#newBtn').addEventListener('click', ()=>{
-        clearForm(true);
-        $('#date').value=todayStr();
-        setMsg('#formMsg','info','已清空目前內容');
-      });
+<div class="card-title">材料（自購）</div>
 
-      $('#reporter').addEventListener('change', ()=>localStorage.setItem('reporter_name', $('#reporter').value.trim()));
-      $('#overviewDate').addEventListener('change', ()=>clearMsg('#overviewMsg'));
-    }
+<div id="materialsWrap"></div>
 
-    async function init(){
-      $('#date').value=todayStr();
-      $('#overviewDate').value=todayStr();
-      $('#siteName').value='桃園地三航廈-機電工程';
-      const savedReporter=localStorage.getItem('reporter_name') || '';
-      if(savedReporter) $('#reporter').value=savedReporter;
-      ensureDefaultRows();
-      bindEvents();
-      clearOverview();
+<button id="addMaterialBtn">新增材料</button>
 
-      try{
-        const res=await timeoutFetch(`${API_URL}?action=ping&_=${Date.now()}`,{method:'GET'},12000);
-        const text=await res.text();
-        const json=JSON.parse(text);
-        if(!json.ok) throw new Error('api_unavailable');
-      }catch(err){
-        setMsg('#formMsg','err','API 連線失敗，請檢查 Apps Script Web App URL 與部署權限');
-      }
-    }
-    init();
-  </script>
+</div>
+
+
+
+<button id="saveBtn">儲存</button>
+
+<div id="formMsg" class="msg"></div>
+
+
+
+<div class="card">
+
+<div class="card-title">總覽查詢</div>
+
+<input id="overviewDate" type="date">
+
+<button id="overviewBtn">查詢</button>
+
+<div id="overview" class="list"></div>
+
+<div id="overviewMsg" class="msg"></div>
+
+</div>
+
+
+</div>
+
+
+
+<script>
+
+const API_URL="https://script.google.com/macros/s/AKfycbwvw1fyJ56kGHiPB_aupVxxoVTaUbd0QmX8EQnxrk7sgjgZaS65WPy3KmuFR_wWJhNh/exec";
+
+
+const state={
+saveBusy:false,
+overviewBusy:false
+};
+
+
+function setLoading(v){
+
+document.getElementById("loading")
+.classList.toggle("show",v);
+
+}
+
+
+function setMsg(id,type,text){
+
+const el=document.getElementById(id);
+
+el.className="msg "+type+" show";
+
+el.innerText=text;
+
+}
+
+
+function intVal(v){
+
+const n=Number(v);
+
+return isNaN(n)?0:n;
+
+}
+
+
+
+function vehicleTemplate(){
+
+return `
+<div class="vehicle-item">
+<input class="vehicle-type" placeholder="車種">
+<input class="vehicle-qty" type="number" placeholder="數量">
+<input class="vehicle-workers" type="number" placeholder="作業人數">
+<button class="delVehicle">刪除</button>
+</div>
+`;
+
+}
+
+
+function materialTemplate(){
+
+return `
+<div class="material-item">
+<input class="material-name" placeholder="材料名稱">
+<input class="material-spec" placeholder="規格">
+<input class="material-unit" placeholder="單位">
+<input class="material-qty" type="number" placeholder="數量">
+<button class="delMaterial">刪除</button>
+</div>
+`;
+
+}
+
+
+function addVehicle(){
+
+vehiclesWrap.insertAdjacentHTML(
+"beforeend",
+vehicleTemplate()
+);
+
+}
+
+
+function addMaterial(){
+
+materialsWrap.insertAdjacentHTML(
+"beforeend",
+materialTemplate()
+);
+
+}
+
+
+function collectVehicles(){
+
+return [...document.querySelectorAll(".vehicle-item")]
+
+.map(v=>({
+
+type:v.querySelector(".vehicle-type").value,
+
+qty:intVal(v.querySelector(".vehicle-qty").value),
+
+workers:intVal(v.querySelector(".vehicle-workers").value)
+
+}))
+
+.filter(v=>v.type);
+
+}
+
+
+function collectMaterials(){
+
+return [...document.querySelectorAll(".material-item")]
+
+.map(m=>({
+
+name:m.querySelector(".material-name").value,
+
+spec:m.querySelector(".material-spec").value,
+
+unit:m.querySelector(".material-unit").value,
+
+qty:intVal(m.querySelector(".material-qty").value)
+
+}))
+
+.filter(m=>m.name);
+
+}
+
+
+
+async function save(){
+
+if(state.saveBusy)return;
+
+state.saveBusy=true;
+
+setLoading(true);
+
+
+const payload={
+
+action:"createReport",
+
+date:date.value,
+
+reporter:reporter.value,
+
+area:area.value,
+
+workItem:workItem.value,
+
+issue:issue.value,
+
+directConstruction:directConstruction.value,
+
+directTransport:directTransport.value,
+
+directManagement:directManagement.value,
+
+directOther:directOther.value,
+
+measuredConstruction:measuredConstruction.value,
+
+measuredTransport:measuredTransport.value,
+
+measuredManagement:measuredManagement.value,
+
+measuredOther:measuredOther.value,
+
+workStart:workStart.value,
+
+workEnd:workEnd.value,
+
+otDirect:otDirect.value,
+
+otMeasured:otMeasured.value,
+
+otStart:otStart.value,
+
+otEnd:otEnd.value,
+
+vehicles:JSON.stringify(collectVehicles()),
+
+materials:JSON.stringify(collectMaterials())
+
+};
+
+
+try{
+
+const res=await fetch(API_URL,{
+method:"POST",
+body:new URLSearchParams(payload)
+});
+
+const json=await res.json();
+
+if(!json.ok){
+
+if(json.message==="date_exists"){
+
+const yes=confirm("已填過 是否覆蓋");
+
+if(!yes)return;
+
+payload.action="updateReport";
+
+await fetch(API_URL,{
+method:"POST",
+body:new URLSearchParams(payload)
+});
+
+}
+
+}
+
+setMsg("formMsg","ok","儲存成功");
+
+}catch(err){
+
+setMsg("formMsg","err","儲存失敗");
+
+}
+
+state.saveBusy=false;
+
+setLoading(false);
+
+}
+
+
+
+async function loadOverview(){
+
+if(state.overviewBusy)return;
+
+state.overviewBusy=true;
+
+setLoading(true);
+
+try{
+
+const res=await fetch(
+API_URL+
+"?action=getReport&date="+
+overviewDate.value
+);
+
+const json=await res.json();
+
+if(!json.exists){
+
+overview.innerHTML="無資料";
+
+return;
+
+}
+
+const d=json.data;
+
+overview.innerHTML=`
+日期:${d.date}<br>
+填報:${d.reporter}<br>
+區域:${d.area}<br>
+施工:${d.workItem}<br>
+點工:${d.dailyDirectTotal}<br>
+計價:${d.dailyMeasuredTotal}<br>
+累計點工:${d.cumDirectTotal}<br>
+累計計價:${d.cumMeasuredTotal}
+`;
+
+}catch(err){
+
+setMsg("overviewMsg","err","查詢失敗");
+
+}
+
+state.overviewBusy=false;
+
+setLoading(false);
+
+}
+
+
+
+addVehicleBtn.onclick=addVehicle;
+addMaterialBtn.onclick=addMaterial;
+
+saveBtn.onclick=save;
+overviewBtn.onclick=loadOverview;
+
+</script>
+
+
 </body>
 </html>
