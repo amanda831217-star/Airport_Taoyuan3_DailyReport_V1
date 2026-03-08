@@ -347,6 +347,20 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbwvw1fyJ56kGHiPB_aupVxxoVTaUbd0QmX8EQnxrk7sgjgZaS65WPy3KmuFR_wWJhNh/exec';
 
+async function postForm(data){
+  const body = new URLSearchParams();
+  Object.keys(data).forEach(k=>{
+    body.append(k, typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k]);
+  });
+
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    body
+  });
+
+  return await res.json();
+}
+
     const $ = s => document.querySelector(s);
     const $$ = s => [...document.querySelectorAll(s)];
 
