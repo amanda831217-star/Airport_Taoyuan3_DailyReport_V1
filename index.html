@@ -400,7 +400,7 @@
     <div class="hero-inner">
       <div class="hero-badge">TAOYUAN AIRPORT • DAILY REPORT</div>
       <div>
-        <div class="hero-title">桃園地三航廈施工填報</div>
+        <div class="hero-title">桃園第三航廈施工填報</div>
       </div>
     </div>
   </div>
@@ -420,7 +420,7 @@
         </div>
         <div class="field">
           <label>案場 <span class="en">Site</span></label>
-          <input type="text" id="siteName" value="桃園地三航廈-機電工程" readonly>
+          <input type="text" id="siteName" value="桃園第三航廈-機電工程" readonly>
         </div>
       </div>
 
@@ -746,7 +746,7 @@
 
     function clearForm(keepReporter=true){
       const reporter = keepReporter ? $('#reporter').value.trim() : '';
-      $('#siteName').value='桃園地三航廈-機電工程';
+      $('#siteName').value='桃園第三航廈-機電工程';
       $('#reporter').value=reporter;
       $('#area').value='';
       $('#workItem').value='';
@@ -844,7 +844,7 @@
       $('#cumDirectTotal').textContent=String(intVal(data.cumDirectTotal));
       $('#cumMeasuredTotal').textContent=String(intVal(data.cumMeasuredTotal));
 
-      $('#ovSite').textContent=data.siteName || '桃園地三航廈-機電工程';
+      $('#ovSite').textContent=data.siteName || '桃園第三航廈-機電工程';
       $('#ovDate').textContent=formatDateOnly(data.date);
       $('#ovReporter').textContent=data.reporter || '-';
       $('#ovArea').textContent=data.area || '-';
@@ -886,7 +886,7 @@
         if(!json.exists){
           clearOverview();
           $('#ovDate').textContent=date;
-          $('#ovSite').textContent='桃園地三航廈-機電工程';
+          $('#ovSite').textContent='桃園第三航廈-機電工程';
           if(showMessage) setMsg('#overviewMsg','info','當日尚無資料');
           return;
         }
@@ -1009,7 +1009,7 @@
     async function init(){
       $('#date').value=todayStr();
       $('#overviewDate').value=todayStr();
-      $('#siteName').value='桃園地三航廈-機電工程';
+      $('#siteName').value='桃園第三航廈-機電工程';
 
       const savedReporter=localStorage.getItem('reporter_name') || '';
       if(savedReporter) $('#reporter').value=savedReporter;
