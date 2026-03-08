@@ -676,18 +676,12 @@
         <div class="kv">
           <div class="k">點工</div><div class="v" id="ovDirect">-</div>
           <div class="k">計價</div><div class="v" id="ovMeasured">-</div>
+          <div class="k">車輛機具</div><div class="v" id="ovVehicles">-</div>
+    <div class="k">材料自購</div><div class="v" id="ovMaterials">-</div>
         </div>
       </div>
 
-      <div class="overview-block">
-        <div class="section-title" style="font-size:16px;">車輛及機具</div>
-        <div id="ovVehicles" class="list-table"></div>
-      </div>
-
-      <div class="overview-block">
-        <div class="section-title" style="font-size:16px;">材料（自購）</div>
-        <div id="ovMaterials" class="list-table"></div>
-      </div>
+      
     </div>
   </section>
 
@@ -737,7 +731,97 @@ function intVal(v){
   const n = Number(v);
   return isNaN(n) ? 0 : n;
 }
+function formatDateOnly(v){
+  if (!v) return '-';
 
+  if (typeof v === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+
+    const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (m) return m[1];
+  }
+
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return String(v);
+
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+function formatTimeOnly(v){
+  if (!v) return '-';
+
+  if (typeof v === 'string') {
+    const hm = v.match(/^(\d{1,2}):(\d{2})/);
+    if (hm) {
+      return `${hm[1].padStart(2, '0')}:${hm[2]}`;
+    }
+
+    const iso = v.match(/T(\d{2}):(\d{2})/);
+    if (iso) {
+      return `${iso[1]}:${iso[2]}`;
+    }
+  }
+
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return String(v);
+
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+function formatDateTime(v){
+  if (!v) return '-';
+
+  const d = new Date(v);
+  if (isNaN(d.getTime())) {
+    const s = String(v);
+    const datePart = formatDateOnly(s);
+    const timePart = formatTimeOnly(s);
+    if (datePart === '-' && timePart === '-') return s;
+    if (timePart === '-') return datePart;
+    return `${datePart} ${timePart}`;
+  }
+
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+
+  return `${y}-${m}-${dd} ${hh}:${mm}`;
+}
+
+function formatRange(start, end){
+  const s = formatTimeOnly(start);
+  const e = formatTimeOnly(end);
+  if (s === '-' && e === '-') return '-';
+  return `${s} ~ ${e}`;
+}
+
+function formatVehicleSummary(items){
+  if (!items || !items.length) return '無資料';
+  return items.map(x => {
+    const type = x.type || '-';
+    const qty = intVal(x.qty);
+    const workers = intVal(x.workers);
+    return `• ${type} × ${qty}（${workers}人）`;
+  }).join('\n');
+}
+
+function formatMaterialSummary(items){
+  if (!items || !items.length) return '無資料';
+  return items.map(x => {
+    const name = x.name || '-';
+    const spec = x.spec || '-';
+    const unit = x.unit || '-';
+    const qty = intVal(x.qty);
+    return `• ${name} / ${spec} / ${unit} / ${qty}`;
+  }).join('\n');
+}
 function escapeHtml(str){
   return String(str || '')
     .replaceAll('&','&amp;')
@@ -957,20 +1041,32 @@ function renderOverview(data){
   $('#cumMeasuredTotal').textContent = String(intVal(data.cumMeasuredTotal));
 
   $('#ovSite').textContent = data.siteName || '桃園地三航廈-機電工程';
-  $('#ovDate').textContent = data.date || '-';
+  $('#ovDate').textContent = formatDateOnly(data.date);
   $('#ovReporter').textContent = data.reporter || '-';
   $('#ovArea').textContent = data.area || '-';
   $('#ovWorkItem').textContent = data.workItem || '-';
   $('#ovIssue').textContent = data.issue || '-';
-  $('#ovWorkTime').textContent = `${data.workStart || '-'} ~ ${data.workEnd || '-'}`;
-  $('#ovOT').textContent = `點工 ${intVal(data.otDirect)} 人 / 計價 ${intVal(data.otMeasured)} 人｜${data.otStart || '-'} ~ ${data.otEnd || '-'}`;
-  $('#ovUpdatedAt').textContent = data.updatedAt || '-';
+  $('#ovWorkTime').textContent = formatRange(data.workStart, data.workEnd);
+  $('#ovOT').textContent = `點工 ${intVal(data.otDirect)} 人 / 計價 ${intVal(data.otMeasured)} 人｜${formatRange(data.otStart, data.otEnd)}`;
+  $('#ovUpdatedAt').textContent = formatDateTime(data.updatedAt);
 
-  $('#ovDirect').textContent = `施工 ${intVal(data.directConstruction)} / 運輸 ${intVal(data.directTransport)} / 管理 ${intVal(data.directManagement)} / 其它 ${intVal(data.directOther)}`;
-  $('#ovMeasured').textContent = `施工 ${intVal(data.measuredConstruction)} / 運輸 ${intVal(data.measuredTransport)} / 管理 ${intVal(data.measuredManagement)} / 其它 ${intVal(data.measuredOther)}`;
+  $('#ovDirect').textContent =
+    `施工 ${intVal(data.directConstruction)} / 運輸 ${intVal(data.directTransport)} / 管理 ${intVal(data.directManagement)} / 其它 ${intVal(data.directOther)}`;
 
-  renderOverviewList('#ovVehicles', data.vehicles || [], 'vehicle');
-  renderOverviewList('#ovMaterials', data.materials || [], 'material');
+  $('#ovMeasured').textContent =
+    `施工 ${intVal(data.measuredConstruction)} / 運輸 ${intVal(data.measuredTransport)} / 管理 ${intVal(data.measuredManagement)} / 其它 ${intVal(data.measuredOther)}`;
+
+  $('#ovVehicles').innerHTML = `
+    <div class="list-row">
+      <div>車輛及機具：${formatVehicleSummary(data.vehicles || [])}</div>
+    </div>
+  `;
+
+  $('#ovMaterials').innerHTML = `
+    <div class="list-row">
+      <div>材料（自購）：${formatMaterialSummary(data.materials || [])}</div>
+    </div>
+  `;
 }
 
 async function loadOverview(showMessage = true){
